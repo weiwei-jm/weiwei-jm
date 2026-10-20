@@ -38,7 +38,7 @@ public class TextMenuRenderer extends MenuRenderer {
         float rotation = -15f;
 
         // 使用 Mindustry 官方的 Drawf 画字
-        Drawf.text(text, x, y, rotation, Color.white, scale, true);
+        Drawf.text(text, x, y, rotation, Color.white, scale, 0);
 
         Draw.reset();
     }
