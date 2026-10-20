@@ -24,13 +24,13 @@ public class TextMenuRenderer extends MenuRenderer {
 
         Draw.reset();
 
-        // 你的文字内容
-        String text = "mj";
+        // 你的文字内容，你在这里随便改
+        String text = "mj你快回来吧";
         
         // 动画：正弦波控制大小，实现变大变小的效果
         float scale = 1f + Mathf.sin(Time.time * 0.002f) * 0.2f;
         
-        // 文字位置：屏幕中心偏右下一点（你可以进游戏后自己微调数字）
+        // 文字位置：屏幕中心偏右下一点
         float x = Core.graphics.getWidth() / 2f + 80f;
         float y = Core.graphics.getHeight() / 2f + 40f;
         
