@@ -1,4 +1,4 @@
-package jm;
+/*package jm;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -48,3 +48,4 @@ public class TextMenuRenderer extends MenuRenderer {
         // 没有需要释放的资源
     }
 }
+*/
