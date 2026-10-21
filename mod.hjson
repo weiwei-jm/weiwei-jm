@@ -1,8 +1,8 @@
-displayName: 不知道叫啥
+displayName: "java mod"
 name: "jm"
-author: 韦
+author: "韦"
 description: ""
 version: 0.15
-minGameVersion: 160
+minGameVersion: 154
 java: true
 main: "jm.JmMod"
