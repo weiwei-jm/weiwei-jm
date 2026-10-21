@@ -29,7 +29,7 @@ public class JmMod extends Mod {
             // 星球外观
             meshLoader = () -> new JmPlanet(this);
             
-            // 给星球加一个灰色的环 (原版自带的最简单的环)
+            // 给星球加一个灰色的环
             cloudMeshLoader = () -> MeshBuilder.buildRing(this.radius * 1.5f, 0.2f);
             
             // 设置大气层颜色（亮蓝色）
