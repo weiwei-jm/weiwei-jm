@@ -1,42 +1,47 @@
 package jm;
 
-import arc.Events;
-import arc.util.Reflect;
-import arc.util.Log;
-import mindustry.Vars;
-import mindustry.game.EventType;
-import mindustry.graphics.MenuRenderer;
+import arc.graphics.Color;
+import mindustry.content.Planets;
 import mindustry.mod.Mod;
+import mindustry.type.Planet;
+import mindustry.graphics.g3d.MeshBuilder;
 
 public class JmMod extends Mod {
 
-    // 在这里定义你的模组名称
     public static String ModName = "jsm";
-    
+    public static Planet myPlanet;
+
     public JmMod() {
         super();
-        // 构造函数，模组初始化时最先调用
-    }
-
-    @Override
-    public void init() {
-        // 监听游戏加载完毕事件，执行菜单替换
-        Events.on(EventType.ClientLoadEvent.class, e -> {
-            try {
-                // 获取原版菜单渲染器
-                MenuRenderer originalRenderer = Reflect.get(Vars.ui.menufrag, "renderer");
-                // 创建你的文字渲染器并替换
-                TextMenuRenderer textRenderer = new TextMenuRenderer(originalRenderer);
-                Reflect.set(Vars.ui.menufrag, "renderer", textRenderer);
-            } catch (Exception ex) {
-                Log.err("菜单文字模组加载失败", ex);
-            }
-        });
     }
 
     @Override
     public void loadContent() {
         super.loadContent();
-        // 如果你以后想加物品、方块，就在这里写： JmItems.load(); 等等
+
+        // 注册你的星球
+        myPlanet = new Planet("jm-planet", Planets.sun, 1f, 2) {{
+            localizedName = "JM 星球";
+            accessible = true;
+            alwaysUnlocked = true;
+            visible = true;
+            
+            // 星球外观
+            meshLoader = () -> new JmPlanet(this);
+            
+            // 给星球加一个灰色的环 (原版自带的最简单的环)
+            cloudMeshLoader = () -> MeshBuilder.buildRing(this.radius * 1.5f, 0.2f);
+            
+            // 设置大气层颜色（亮蓝色）
+            atmosphereColor = Color.valueOf("00e5ff");
+            atmosphereRadIn = 0.05f;
+            atmosphereRadOut = 0.25f;
+            
+            // 游戏规则（无需战役区块）
+            ruleSetter = r -> {
+                r.waves = true;
+                r.waveSpacing = 60f * 60f; 
+            };
+        }};
     }
 }
