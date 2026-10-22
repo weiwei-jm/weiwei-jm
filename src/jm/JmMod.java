@@ -4,10 +4,11 @@ import arc.graphics.Color;
 import mindustry.content.Planets;
 import mindustry.mod.Mod;
 import mindustry.type.Planet;
+import mindustry.graphics.g3d.MultiMesh;
 
 public class JmMod extends Mod {
 
-    public static String ModName = "jm";
+    public static String ModName = "jsm";
     public static Planet myPlanet;
 
     public JmMod() {
@@ -24,18 +25,20 @@ public class JmMod extends Mod {
             alwaysUnlocked = true;
             visible = true;
             
-            // 1. 星球本体
+            // 星球本体
             meshLoader = () -> new JmPlanet(this);
             
-            // 2. 星球外环（使用我们改写的 DysonRingMesh，灰色）
-            cloudMeshLoader = () -> new DysonRingMesh(this, 2.0f, 0.1f, 729, Color.valueOf("888888"), Color.valueOf("cccccc"), false);
+            // 👇 终极三重环（深灰色 111111）
+            cloudMeshLoader = () -> new MultiMesh(
+                new DysonRingMesh(this, 1.5f, 0.1f, 729, Color.valueOf("111111"), Color.valueOf("111111"), false),
+                new DysonRingMesh(this, 1.8f, 0.1f, 2941, Color.valueOf("111111"), Color.valueOf("111111"), false),
+                new DysonRingMesh(this, 2.1f, 0.1f, 3834, Color.valueOf("111111"), Color.valueOf("111111"), false)
+            );
             
-            // 3. 大气层颜色
             atmosphereColor = Color.valueOf("00e5ff");
             atmosphereRadIn = 0.05f;
             atmosphereRadOut = 0.25f;
             
-            // 4. 游戏规则
             ruleSetter = r -> {
                 r.waves = true;
                 r.waveSpacing = 60f * 60f; 
