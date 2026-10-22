@@ -18,7 +18,7 @@ public class DysonRingMesh extends PlanetMesh {
     public final int seed;
     public final boolean glow;
 
-    public Vec3 flipAngle = new Vec3(0, 1, 0); // 固定旋转轴
+    public Vec3 flipAngle = new Vec3(0, 1, 0);
     public float flipValue = 0;
     public float flipSpeed = 0.2f;
     public float rotateSpeed = 0.5f;
@@ -55,11 +55,7 @@ public class DysonRingMesh extends PlanetMesh {
 
     @Override
     public void preRender(PlanetParams params) {
-        float alpha = params.planet == planet ? 1f - params.uiAlpha : 1f;
-        if (glow) {
-            alpha *= 0.62f + 0.38f * Mathf.sin(Time.globalTime * pulseSpeed / 32f + seed * 0.013f);
-        }
+        // 直接绑定，去掉原版找不到的 alpha 变量
         Shaders.unlit.bind();
-        Shaders.unlit.alpha = alpha;
     }
 }
