@@ -55,7 +55,7 @@ public class DysonRingMesh extends PlanetMesh {
 
     @Override
     public void preRender(PlanetParams params) {
-        // 直接绑定，去掉原版找不到的 alpha 变量
+        // 直接绑定，删掉了原版找不到的 alpha 变量
         Shaders.unlit.bind();
     }
 }
