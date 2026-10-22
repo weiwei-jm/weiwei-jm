@@ -3,6 +3,7 @@ package jm;
 import arc.graphics.Color;
 import arc.graphics.Gl;
 import arc.math.Mathf;
+import arc.math.Rand;
 import arc.math.geom.Mat3D;
 import arc.math.geom.Vec3;
 import arc.util.Time;
@@ -13,25 +14,38 @@ import mindustry.type.Planet;
 
 public class DysonRingMesh extends PlanetMesh {
     static Mat3D mat = new Mat3D();
+    static Rand rand = new Rand();
     public static final int ringSegments = 256;
 
     public final int seed;
     public final boolean glow;
 
-    public Vec3 flipAngle = new Vec3(0, 1, 0);
+    // 倾斜与旋转参数
+    public Vec3 flipAngle = new Vec3();
     public float flipValue = 0;
-    public float flipSpeed = 0.2f;
+    public float flipSpeed = 0f;
     public float rotateSpeed = 0.5f;
-    public float pulseSpeed = 1f;
-    public Color ambientTint = Color.white;
+    public Color ambientTint;
 
     public DysonRingMesh(Planet planet, float radius, float height, int seed, Color color, Color color2, boolean glow) {
         super(planet, CylinderRingMeshBuilder.build(radius, height, ringSegments, color, color2), Shaders.unlit);
         this.seed = seed;
         this.glow = glow;
+        
+        // 利用种子生成随机的倾斜轴和倾斜角
+        rand.setSeed(seed);
+        flipValue = rand.random(-180, 180); // 初始倾斜角度
+        flipAngle.setToRandomDirection(rand); // 倾斜轴方向
+        flipSpeed = rand.random(0.25f, 0.55f); // 翻转速度
+        rotateSpeed = rand.random(1.5f, 3.0f); // 自身旋转速度（加大了）
+        
         if (glow) {
             ambientTint = color.cpy();
         }
+    }
+
+    public float flipRot() {
+        return Time.globalTime * flipSpeed / 40f + flipValue;
     }
 
     public float relRot() {
@@ -45,9 +59,11 @@ public class DysonRingMesh extends PlanetMesh {
         preRender(params);
         shader.bind();
         shader.setUniformMatrix4("u_proj", projection.val);
+        
+        // 核心逻辑：应用倾斜矩阵 + 自身的Y轴旋转
         shader.setUniformMatrix4("u_trans", mat
                 .setToTranslation(planet.position)
-                .rotate(flipAngle, flipValue)
+                .rotate(flipAngle, flipRot())
                 .rotate(Vec3.Y, planet.getRotation() + relRot()).val);
         shader.apply();
         mesh.render(shader, Gl.triangles);
@@ -55,7 +71,6 @@ public class DysonRingMesh extends PlanetMesh {
 
     @Override
     public void preRender(PlanetParams params) {
-        // 直接绑定，删掉了原版找不到的 alpha 变量
         Shaders.unlit.bind();
     }
 }
