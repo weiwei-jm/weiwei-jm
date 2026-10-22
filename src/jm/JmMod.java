@@ -28,11 +28,11 @@ public class JmMod extends Mod {
             // 星球本体
             meshLoader = () -> new JmPlanet(this);
             
-            // 👇 终极三重环（深灰色 262626）
+            //三重环（灰色 555555）
             cloudMeshLoader = () -> new MultiMesh(
-                new DysonRingMesh(this, 1.5f, 0.1f, 729, Color.valueOf("262626"), Color.valueOf("262626"), false),
-                new DysonRingMesh(this, 1.8f, 0.1f, 2941, Color.valueOf("262626"), Color.valueOf("262626"), false),
-                new DysonRingMesh(this, 2.1f, 0.1f, 3834, Color.valueOf("262626"), Color.valueOf("262626"), false)
+                new DysonRingMesh(this, 1.5f, 0.1f, 729, Color.valueOf("555555"), Color.valueOf("555555"), false),
+                new DysonRingMesh(this, 1.8f, 0.1f, 2941, Color.valueOf("555555"), Color.valueOf("555555"), false),
+                new DysonRingMesh(this, 2.1f, 0.1f, 3834, Color.valueOf("555555"), Color.valueOf("555555"), false)
             );
             
             atmosphereColor = Color.valueOf("00e5ff");
