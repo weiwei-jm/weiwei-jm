@@ -1,4 +1,5 @@
 package jm;
+package jm;
 
 import arc.graphics.Color;
 import arc.graphics.Gl;
@@ -20,7 +21,6 @@ public class DysonRingMesh extends PlanetMesh {
     public final int seed;
     public final boolean glow;
 
-    // 倾斜与旋转参数
     public Vec3 flipAngle = new Vec3();
     public float flipValue = 0;
     public float flipSpeed = 0f;
@@ -32,12 +32,11 @@ public class DysonRingMesh extends PlanetMesh {
         this.seed = seed;
         this.glow = glow;
         
-        // 利用种子生成随机的倾斜轴和倾斜角
         rand.setSeed(seed);
-        flipValue = rand.random(-180, 180); // 初始倾斜角度
-        flipAngle.setToRandomDirection(rand); // 倾斜轴方向
-        flipSpeed = rand.random(0.25f, 0.55f); // 翻转速度
-        rotateSpeed = rand.random(1.5f, 3.0f); // 自身旋转速度（加大了）
+        flipValue = rand.random(-180, 180);
+        flipAngle.setToRandomDirection(rand); // 随机倾斜轴
+        flipSpeed = rand.random(0.25f, 0.55f); 
+        rotateSpeed = rand.random(0.6f, 2.2f);
         
         if (glow) {
             ambientTint = color.cpy();
@@ -60,7 +59,7 @@ public class DysonRingMesh extends PlanetMesh {
         shader.bind();
         shader.setUniformMatrix4("u_proj", projection.val);
         
-        // 核心逻辑：应用倾斜矩阵 + 自身的Y轴旋转
+        // 硬币翻滚 + 自身旋转
         shader.setUniformMatrix4("u_trans", mat
                 .setToTranslation(planet.position)
                 .rotate(flipAngle, flipRot())
