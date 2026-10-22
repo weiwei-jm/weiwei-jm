@@ -8,7 +8,7 @@ import mindustry.graphics.g3d.MultiMesh;
 
 public class JmMod extends Mod {
 
-    public static String ModName = "jsm";
+    public static String ModName = "jm";
     public static Planet myPlanet;
 
     public JmMod() {
@@ -20,7 +20,7 @@ public class JmMod extends Mod {
         super.loadContent();
 
         myPlanet = new Planet("jm-planet", Planets.sun, 1f, 2) {{
-            localizedName = "JM 星球";
+            localizedName = "戴森环星球";
             accessible = true;
             alwaysUnlocked = true;
             visible = true;
@@ -28,11 +28,11 @@ public class JmMod extends Mod {
             // 星球本体
             meshLoader = () -> new JmPlanet(this);
             
-            // 👇 终极三重环（深灰色 111111）
+            // 👇 终极三重环（深灰色 262626）
             cloudMeshLoader = () -> new MultiMesh(
-                new DysonRingMesh(this, 1.5f, 0.1f, 729, Color.valueOf("111111"), Color.valueOf("111111"), false),
-                new DysonRingMesh(this, 1.8f, 0.1f, 2941, Color.valueOf("111111"), Color.valueOf("111111"), false),
-                new DysonRingMesh(this, 2.1f, 0.1f, 3834, Color.valueOf("111111"), Color.valueOf("111111"), false)
+                new DysonRingMesh(this, 1.5f, 0.1f, 729, Color.valueOf("262626"), Color.valueOf("262626"), false),
+                new DysonRingMesh(this, 1.8f, 0.1f, 2941, Color.valueOf("262626"), Color.valueOf("262626"), false),
+                new DysonRingMesh(this, 2.1f, 0.1f, 3834, Color.valueOf("262626"), Color.valueOf("262626"), false)
             );
             
             atmosphereColor = Color.valueOf("00e5ff");
