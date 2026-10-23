@@ -5,6 +5,7 @@ import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Fill;
 import arc.graphics.g2d.Lines;
 import arc.util.Disposable;
+import arc.util.Time; // 👈 引用正确的 Time 类
 
 public class BlackHoleRenderer implements Disposable {
     public float x, y;
@@ -19,15 +20,18 @@ public class BlackHoleRenderer implements Disposable {
     public void update() {
         if (!active) return;
         
-        currentLife += mindustry.core.Time.delta();
+        // 👇 改用 Time.delta
+        currentLife += Time.delta;
         
         if (currentLife < life) {
             if (currentRadius < maxRadius) {
-                currentRadius += growthSpeed * mindustry.core.Time.delta() / 60f;
+                // 👇 直接用 Time.delta 计算
+                currentRadius += growthSpeed * (Time.delta / 60f);
                 if (currentRadius > maxRadius) currentRadius = maxRadius;
             }
         } else {
-            currentRadius -= growthSpeed * mindustry.core.Time.delta() / 60f;
+            // 👇 直接用 Time.delta 计算
+            currentRadius -= growthSpeed * (Time.delta / 60f);
             if (currentRadius <= 0) {
                 currentRadius = 0;
                 active = false;
