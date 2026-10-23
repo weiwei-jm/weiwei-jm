@@ -1,6 +1,5 @@
 package jm;
 
-import arc.Core;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Fill;
@@ -38,10 +37,10 @@ public class BlackHoleRenderer implements Disposable {
 
     public void draw() {
         if (!active || currentRadius <= 0) return;
-        // 画纯黑色中心
+        // 纯黑色中心
         Draw.color(Color.black);
         Fill.circle(x, y, currentRadius);
-        // 画黄色外圈
+        // 黄色外圈
         Draw.color(ringColor);
         Lines.stroke(3f);
         Lines.circle(x, y, currentRadius);
