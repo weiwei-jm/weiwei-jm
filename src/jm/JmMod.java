@@ -5,10 +5,7 @@ import mindustry.content.Planets;
 import mindustry.mod.Mod;
 import mindustry.type.Planet;
 import mindustry.graphics.g3d.MultiMesh;
-
-// 引入实体注册相关的类
 import mindustry.gen.EntityMapping;
-import mindustry.gen.Entityc;
 
 public class JmMod extends Mod {
 
@@ -18,14 +15,11 @@ public class JmMod extends Mod {
     public JmMod() {
         super();
         
-        // 👇 核心：在原版解析 JSON 之前，把我们写的单位类注册进引擎！
+        // 将类强行注册到实体映射表，防止手机端找不到
         try {
-            // 注册到游戏的实体字典里
-            EntityMapping.register("space-rift-unit", SpaceRiftUnit::new);
-            // 注册实体类的 ID
-            EntityMapping.idMap.put(SpaceRiftUnit.class, 128); // 随便给个不冲突的ID
+            EntityMapping.map.put("space-rift-unit", SpaceRiftUnit::new);
         } catch (Exception e) {
-            arc.util.Log.err("注册 SpaceRiftUnit 失败", e);
+            arc.util.Log.err("注册单位类失败", e);
         }
     }
 
@@ -33,9 +27,9 @@ public class JmMod extends Mod {
     public void loadContent() {
         super.loadContent();
 
-        // 注册星球
+        // 注册星球...
         myPlanet = new Planet("jm-planet", Planets.sun, 1f, 2) {{
-            localizedName = "JM 星球";
+            localizedName = "[blue]蓝日";
             accessible = true;
             alwaysUnlocked = true;
             visible = true;
