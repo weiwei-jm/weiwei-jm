@@ -1,11 +1,11 @@
 package jm;
 
 import arc.graphics.Color;
+import mindustry.Vars;
 import mindustry.content.Planets;
 import mindustry.mod.Mod;
 import mindustry.type.Planet;
 import mindustry.graphics.g3d.MultiMesh;
-import mindustry.Vars;
 import mindustry.game.EventType;
 import arc.Events;
 
@@ -47,18 +47,18 @@ public class JmMod extends Mod {
             };
         }};
         
-        // 👇 进游戏自动生成一个测试单位
+        // 👇 核心：只要你加载任何地图，就在玩家身边召唤它！
         Events.on(EventType.WorldLoadEvent.class, e -> {
-            // 强制让游戏加载这个类
-            SpaceRiftUnit unit = new SpaceRiftUnit();
-            // 必须给它指定一个原版类型，否则不会显示
+            // 直接用 Java 创建
+            SpaceRiftUnit unit = SpaceRiftUnit.create();
+            // 借用匕首的贴图和数据
             unit.type = mindustry.content.UnitTypes.dagger;
-            // 设置阵营为你所在的队伍
+            // 阵营设为玩家阵营
             unit.team = Vars.player.team;
-            // 生成在玩家位置
+            // 生成在玩家位置偏上一点
             unit.x = Vars.player.x;
             unit.y = Vars.player.y + 40f; 
-            // 加入游戏世界
+            // 让它出场！（这会触发3秒裂缝动画）
             unit.add();
         });
     }
