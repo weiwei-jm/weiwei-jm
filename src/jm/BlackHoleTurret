@@ -1,9 +1,9 @@
 package jm;
 
-import mindustry.gen.Building;
 import mindustry.type.Category;
 import mindustry.world.blocks.defense.turrets.Turret;
 import mindustry.entities.bullet.BasicBulletType;
+import mindustry.entities.bullet.BulletType; // 👈 补上这个
 import mindustry.type.ItemStack;
 import mindustry.content.Items;
 import mindustry.content.Fx;
@@ -11,27 +11,24 @@ import mindustry.content.Fx;
 public class BlackHoleTurret extends Turret {
     public BlackHoleTurret(String name) {
         super(name);
-        this.size = 4; // 4x4
-        this.health = 1800; // 血量 1800
-        this.range = 400f; // 攻击范围
-        this.reload = 300f; // 冷却时间 (300帧 = 5秒)
-        this.targetAir = true; // 对空
-        this.targetGround = true; // 对地
+        this.size = 4; 
+        this.health = 1800; 
+        this.range = 400f; 
+        this.reload = 300f; 
+        this.targetAir = true; 
+        this.targetGround = true; 
         this.category = Category.turret;
         
-        // 核心：不需要子弹，不吃冷却液，只要索敌到就开火
         this.itemCapacity = 0; 
         this.acceptCoolant = false; 
         this.consumeAmmo = false; 
         
-        // 建造成本
         this.requirements(Category.turret, ItemStack.with(
             Items.copper, 1000,
             Items.lead, 800,
             Items.titanium, 500
         ));
 
-        // 隐形子弹，只用来作为开火的触发器
         this.shootType = new BasicBulletType(0f, 0) {{
             lifetime = 1f;
             hitEffect = Fx.none;
@@ -49,7 +46,6 @@ public class BlackHoleTurret extends Turret {
                 float ty = target.y;
                 float offset = 20f + 5f; 
 
-                // 生成 4 个工程机飞向四个角
                 for (int i = 0; i < 4; i++) {
                     float ox = (i % 2 == 0 ? offset : -offset);
                     float oy = (i < 2 ? offset : -offset);
