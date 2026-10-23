@@ -3,7 +3,7 @@ package jm;
 import mindustry.type.Category;
 import mindustry.world.blocks.defense.turrets.Turret;
 import mindustry.entities.bullet.BasicBulletType;
-import mindustry.entities.bullet.BulletType; // 👈 补上这个
+import mindustry.entities.bullet.BulletType;
 import mindustry.type.ItemStack;
 import mindustry.content.Items;
 import mindustry.content.Fx;
