@@ -19,6 +19,14 @@ public class JmMod extends Mod {
     public void loadContent() {
         super.loadContent();
 
+        import mindustry.gen.EntityRegistry; // 如果上面没有这行，补上
+
+// ... 在 loadContent() 里面：
+
+        // 强行注册实体类，解决手机端 ClassNotFound 问题
+        EntityRegistry.register(jm.SpaceRiftUnit.class, () -> new jm.SpaceRiftUnit());
+        EntityRegistry.register(jm.SpaceRiftUnit.class, "jm-space-rift", () -> new jm.SpaceRiftUnit());
+        
         // 纯净版：只有星球
         myPlanet = new Planet("jm-planet", Planets.sun, 1f, 2) {{
             localizedName = "JM 星球";
