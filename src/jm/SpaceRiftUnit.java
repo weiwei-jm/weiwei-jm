@@ -9,6 +9,7 @@ import arc.util.Time;
 import arc.util.Tmp;
 import mindustry.gen.UnitEntity;
 import mindustry.graphics.Layer;
+import mindustry.gen.Unit;
 
 public class SpaceRiftUnit extends UnitEntity {
     public float spawnTimer = 0f;
@@ -21,9 +22,14 @@ public class SpaceRiftUnit extends UnitEntity {
     public float riftWidth = 16f; 
     public float riftLength = 160f; 
 
-    // 👇 就是这里！无参构造函数加在类的里面，变量的下面
+    // 必须有这个无参构造
     public SpaceRiftUnit() {
         super();
+    }
+
+    // 自定义单位的 create 方法（后续直接用这个召唤）
+    public static SpaceRiftUnit create() {
+        return new SpaceRiftUnit();
     }
 
     @Override
