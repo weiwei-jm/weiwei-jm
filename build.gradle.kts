@@ -44,8 +44,6 @@ repositories{
             }
         }
     }
-    mavenCentral()
-    maven("https://jitpack.io")
 }
 
 java{
@@ -55,7 +53,6 @@ java{
 
 dependencies{
     compileOnly(if(mindustryVersion == "be") "Anuken:MindustryBuilds:latest" else "Anuken:Mindustry:$mindustryVersion")
-    compileOnly("com.github.MEEPofFaith:MindustryBlackHoleRenderer:master-SNAPSHOT")
 }
 
 tasks.jar{
