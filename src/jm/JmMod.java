@@ -5,7 +5,6 @@ import mindustry.content.Planets;
 import mindustry.mod.Mod;
 import mindustry.type.Planet;
 import mindustry.graphics.g3d.MultiMesh;
-import mindustry.gen.EntityMapping;
 
 public class JmMod extends Mod {
 
@@ -14,22 +13,15 @@ public class JmMod extends Mod {
 
     public JmMod() {
         super();
-        
-        // 将类强行注册到实体映射表，防止手机端找不到
-        try {
-            EntityMapping.map.put("space-rift-unit", SpaceRiftUnit::new);
-        } catch (Exception e) {
-            arc.util.Log.err("注册单位类失败", e);
-        }
     }
 
     @Override
     public void loadContent() {
         super.loadContent();
 
-        // 注册星球...
+        // 注册星球
         myPlanet = new Planet("jm-planet", Planets.sun, 1f, 2) {{
-            localizedName = "[blue]蓝日";
+            localizedName = "JM 星球";
             accessible = true;
             alwaysUnlocked = true;
             visible = true;
