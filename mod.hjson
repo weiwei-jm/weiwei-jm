@@ -6,6 +6,3 @@ version: 0.15
 minGameVersion: 154
 java: true
 main: "jm.JmMod"
-dependencies: [
-    "black-hole-renderer"
-]
