@@ -1,6 +1,7 @@
 package jm;
 
 import arc.graphics.Color;
+import mindustry.Vars;
 import mindustry.content.Planets;
 import mindustry.mod.Mod;
 import mindustry.type.Planet;
@@ -10,6 +11,7 @@ public class JmMod extends Mod {
 
     public static String ModName = "jm";
     public static Planet myPlanet;
+    public static BlackHoleTurret blackHoleTurret;
 
     public JmMod() {
         super();
@@ -19,20 +21,20 @@ public class JmMod extends Mod {
     public void loadContent() {
         super.loadContent();
 
+        // 1. 注册星球
         myPlanet = new Planet("jm-planet", Planets.sun, 1f, 2) {{
-            localizedName = "戴森环星球";
+            localizedName = "JM 星球";
             accessible = true;
             alwaysUnlocked = true;
             visible = true;
             
-            // 星球本体
             meshLoader = () -> new JmPlanet(this);
             
-            //三重环（灰色 555555）
+            // 三个浅灰色的环
             cloudMeshLoader = () -> new MultiMesh(
-                new DysonRingMesh(this, 1.5f, 0.1f, 729, Color.valueOf("262626"), Color.valueOf("262626"), false),
-                new DysonRingMesh(this, 1.8f, 0.1f, 2941, Color.valueOf("262626"), Color.valueOf("262626"), false),
-                new DysonRingMesh(this, 2.1f, 0.1f, 3834, Color.valueOf("262626"), Color.valueOf("262626"), false)
+                new DysonRingMesh(this, 1.5f, 0.1f, 729, Color.valueOf("555555"), Color.valueOf("555555"), false),
+                new DysonRingMesh(this, 1.8f, 0.1f, 2941, Color.valueOf("555555"), Color.valueOf("555555"), false),
+                new DysonRingMesh(this, 2.1f, 0.1f, 3834, Color.valueOf("555555"), Color.valueOf("555555"), false)
             );
             
             atmosphereColor = Color.valueOf("00e5ff");
@@ -44,5 +46,9 @@ public class JmMod extends Mod {
                 r.waveSpacing = 60f * 60f; 
             };
         }};
+
+        // 2. 注册黑洞炮塔并强制加入游戏内容
+        blackHoleTurret = new BlackHoleTurret("black-hole-turret");
+        Vars.content.blocks().add(blackHoleTurret);
     }
 }
