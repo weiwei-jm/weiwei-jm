@@ -12,14 +12,19 @@ import mindustry.graphics.Layer;
 
 public class SpaceRiftUnit extends UnitEntity {
     public float spawnTimer = 0f;
-    public float spawnDuration = 180f;
+    public float spawnDuration = 180f; // 3秒
 
     public boolean isDying = false;
     public float deathTimer = 0f;
-    public float deathDuration = 60f;
+    public float deathDuration = 60f; // 1秒
 
     public float riftWidth = 16f; 
     public float riftLength = 160f; 
+
+    // 👇 就是这里！无参构造函数加在类的里面，变量的下面
+    public SpaceRiftUnit() {
+        super();
+    }
 
     @Override
     public void update() {
