@@ -27,6 +27,7 @@ public class JmMod extends Mod {
         // 注册状态和天气
         erosionStatus = new QuantumErosionStatus();
         quantumStorm = new QuantumStormWeather("quantum-storm", erosionStatus);
+        quantumStorm.localizedName = "量子风暴"; // 👈 加上这行，游戏里就会显示这个名字
 
         // 注册你的自定义星球
         myPlanet = new Planet("ring-world", Planets.sun, 1f, 2) {{
