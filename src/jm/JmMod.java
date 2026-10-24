@@ -41,7 +41,7 @@ public void init() {
 
     // 👇 终极修法：直接调用原版的 KeyCode 枚举，绝对不会有问题
     arc.Events.run(mindustry.game.EventType.Trigger.update, () -> {
-        if (arc.Core.input.keyTap(arc.input.KeyCode.T)) {
+        if (arc.Core.input.keyTap(arc.input.KeyCode.t)) {
             BlinkUI.startAiming();
         }
     });
