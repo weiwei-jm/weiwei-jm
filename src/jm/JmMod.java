@@ -24,11 +24,12 @@ public class JmMod extends Mod {
     public void loadContent() {
         super.loadContent();
 
-        // ==========================================
-        // 1. 注册你的自定义星球 (带三个环的蓝白星球)
-        // ==========================================
-        myPlanet = new Planet("[sky]RingWorld", Planets.sun, 1f, 2) {{
-            localizedName = "[sky]环界";
+        // 1. 注册你的自定义星球
+        myPlanet = new Planet("ring-world", Planets.sun, 1f, 2) {{
+            localizedName = "[sky]环界"; // 👈 中文名
+            // 英文名会自动使用注册名 "ring-world"，如果要强制英文名可以加：
+            // name = "[sky]RingWorld"; 
+            
             accessible = true;
             alwaysUnlocked = true;
             visible = true;
@@ -44,7 +45,7 @@ public class JmMod extends Mod {
             atmosphereColor = Color.valueOf("00e5ff");
             atmosphereRadIn = 0.05f;
             atmosphereRadOut = 0.25f;
-            iconColor = Color.valueOf("00e5ff"); // 图标改为蓝色
+            iconColor = Color.valueOf("00e5ff");
             
             ruleSetter = r -> {
                 r.waves = true;
@@ -52,25 +53,19 @@ public class JmMod extends Mod {
             };
         }};
 
-
-        // ==========================================
-        // 2. 注册状态和天气 (量子风暴)
-        // ==========================================
+        // 2. 注册状态和天气
         erosionStatus = new QuantumErosionStatus();
         quantumStorm = new QuantumStormWeather("quantum-storm", erosionStatus);
 
-
-        // ==========================================
-        // 3. 将天气挂载到原版的 蓝巨星(Blue Giant)
-        // ==========================================
-        Planets.blueGiant.visible = true;
-        Planets.blueGiant.accessible = true;
-        Planets.blueGiant.alwaysUnlocked = true;
-        Planets.blueGiant.iconColor = Color.valueOf("00e5ff");
+        // 3. 挂载到原版蓝巨星（原版变量名叫 Planets.blue）
+        Planets.blue.visible = true;
+        Planets.blue.accessible = true;
+        Planets.blue.alwaysUnlocked = true;
+        Planets.blue.iconColor = Color.valueOf("00e5ff");
         
-        Planets.blueGiant.ruleSetter = r -> {
+        Planets.blue.ruleSetter = r -> {
             r.weather.add(new WeatherEntry(quantumStorm));
             r.weather.each(w -> w.always = true); 
         };
     }
-    }
+}
