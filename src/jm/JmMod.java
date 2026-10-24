@@ -1,4 +1,4 @@
-@package jm;
+package jm;
 
 import arc.Core;
 import arc.Events;
