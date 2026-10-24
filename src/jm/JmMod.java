@@ -1,5 +1,4 @@
 package jm;
-package jm;
 
 import arc.graphics.Color;
 import mindustry.content.Planets;
