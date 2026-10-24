@@ -8,11 +8,10 @@ import mindustry.entities.abilities.Ability;
 import mindustry.gen.Unit;
 
 public class BlinkAbility extends Ability {
-    public float maxDistance = 100f * 8f; // 默认 100 格
-    public float cooldown = 600f;         // 默认冷却 10 秒
-    public Color effectColor = Color.valueOf("00e5ff"); // 默认特效色
+    public float maxDistance = 100f * 8f; 
+    public float cooldown = 600f;         
+    public Color effectColor = Color.valueOf("00e5ff"); 
     
-    // 记录当前状态
     public transient float timer = 0f;
     public static Seq<BlinkEffect> effects = new Seq<>();
 
@@ -33,8 +32,8 @@ public class BlinkAbility extends Ability {
         
         float dst = Mathf.dst(unit.x, unit.y, targetX, targetY);
         if (dst > maxDistance) {
-            // 太远了，屏幕中间弹字
-            mindustry.Vars.ui.showInfoFade("[red]太远了！[]");
+            // 距离太远提示
+            mindustry.Vars.ui.showInfoFade("[scarlet]太远了！[]");
             return;
         }
 
@@ -51,6 +50,7 @@ public class BlinkAbility extends Ability {
         effects.add(new BlinkEffect(startX, startY, targetX, targetY, startRot, unit.rotation, c, unit.type));
         
         if (unit == mindustry.Vars.player.unit()) {
+            // 原版震动屏幕
             mindustry.Vars.renderer.shake(5f, 10f);
         }
     }
