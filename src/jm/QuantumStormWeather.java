@@ -2,25 +2,32 @@ package jm;
 
 import arc.graphics.Color;
 import arc.util.Time;
-import mindustry.content.StatusEffects;
 import mindustry.gen.Sounds;
 import mindustry.type.weather.ParticleWeather;
 import mindustry.world.meta.Attribute;
 
 public class QuantumStormWeather extends ParticleWeather {
     
-    // 加上这个变量
     public mindustry.type.StatusEffect erosionStatus;
 
-    // 改成接收两个参数
     public QuantumStormWeather(String name, mindustry.type.StatusEffect erosion) {
         super(name);
         this.erosionStatus = erosion;
         
+        // 1. 粒子颜色（飞行的小碎块）
         this.color = Color.valueOf("80c8ff"); 
         this.particleRegion = "particle"; 
-        this.drawNoise = true;            
         this.useWindVector = true;        
+        
+        // ==========================================
+        // 👇 2. 核心修改：雾的颜色改成蓝色
+        // ==========================================
+        this.drawNoise = true; // 开启全屏雾气
+        // 把原先默认的白色底雾，改成深一点的幽蓝色 (如 1a5fb4 或 0044cc)
+        this.noiseColor = Color.valueOf("1a5fb4"); 
+        this.opacityMultiplier = 0.8f; // 雾气的浓度
+        this.noiseScale = 800f; // 雾的纹理大小
+        // ==========================================
         
         this.sizeMax = 15f;
         this.sizeMin = 5f;
@@ -31,7 +38,6 @@ public class QuantumStormWeather extends ParticleWeather {
         this.baseSpeed = 8.5f;            
         
         this.attrs.set(Attribute.light, -0.2f); 
-        this.opacityMultiplier = 0.8f;    
         
         this.duration = 10f * Time.toMinutes;
         this.force = 0.15f;
@@ -40,7 +46,6 @@ public class QuantumStormWeather extends ParticleWeather {
         this.soundVol = 0.8f;
     }
 
-    // 👇 重写 update 方法，让风暴刮风时对单位施加状态
     @Override
     public void update(mindustry.gen.WeatherState state) {
         super.update(state);
