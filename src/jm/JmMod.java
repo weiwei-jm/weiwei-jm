@@ -2,7 +2,6 @@ package jm;
 
 import arc.Core;
 import arc.Events;
-import arc.Input;
 import arc.graphics.Color;
 import mindustry.content.Planets;
 import mindustry.game.EventType;
@@ -25,10 +24,9 @@ public class JmMod extends Mod {
 
     @Override
     public void init() {
-        // 1. 初始化跃迁逻辑
         BlinkUI.init();
 
-        // 2. 渲染跃迁特效
+        // 渲染跃迁特效
         Events.run(EventType.Trigger.draw, () -> {
             for (int i = BlinkAbility.effects.size - 1; i >= 0; i--) {
                 BlinkEffect effect = BlinkAbility.effects.get(i);
@@ -41,10 +39,10 @@ public class JmMod extends Mod {
             }
         });
 
-        // 3. 绑定快捷键：按 T 键启动跃迁瞄准
+        // 绑定快捷键：按 T 键
         Events.run(EventType.Trigger.update, () -> {
-            // 修复了按键的引用
-            if (Core.input.keyTap(Input.Keys.T)) {
+            // 👇 用最原生的方法检测键盘 T 键
+            if (Core.input.keyTap(arc.Input.Keys.valueOf("T"))) {
                 BlinkUI.startAiming();
             }
         });
