@@ -23,30 +23,29 @@ public class JmMod extends Mod {
     }
 
     @Override
-    public void init() {
-        BlinkUI.init();
+public void init() {
+    BlinkUI.init();
 
-        // 渲染跃迁特效
-        Events.run(EventType.Trigger.draw, () -> {
-            for (int i = BlinkAbility.effects.size - 1; i >= 0; i--) {
-                BlinkEffect effect = BlinkAbility.effects.get(i);
-                effect.update();
-                if (effect.isDead()) {
-                    BlinkAbility.effects.remove(i);
-                } else {
-                    effect.draw();
-                }
+    // 渲染跃迁特效
+    arc.Events.run(mindustry.game.EventType.Trigger.draw, () -> {
+        for (int i = BlinkAbility.effects.size - 1; i >= 0; i--) {
+            BlinkEffect effect = BlinkAbility.effects.get(i);
+            effect.update();
+            if (effect.isDead()) {
+                BlinkAbility.effects.remove(i);
+            } else {
+                effect.draw();
             }
-        });
+        }
+    });
 
-        // 绑定快捷键：按 T 键
-        Events.run(EventType.Trigger.update, () -> {
-            // 👇 用最原生的方法检测键盘 T 键
-            if (Core.input.keyTap(arc.Input.Keys.valueOf("T"))) {
-                BlinkUI.startAiming();
-            }
-        });
-    }
+    // 👇 终极修法：直接调用原版的 KeyCode 枚举，绝对不会有问题
+    arc.Events.run(mindustry.game.EventType.Trigger.update, () -> {
+        if (arc.Core.input.keyTap(arc.input.KeyCode.T)) {
+            BlinkUI.startAiming();
+        }
+    });
+}
 
     @Override
     public void loadContent() {
