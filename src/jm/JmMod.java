@@ -24,12 +24,13 @@ public class JmMod extends Mod {
     public void loadContent() {
         super.loadContent();
 
-        // 1. 注册你的自定义星球
+        // 注册状态和天气
+        erosionStatus = new QuantumErosionStatus();
+        quantumStorm = new QuantumStormWeather("quantum-storm", erosionStatus);
+
+        // 注册你的自定义星球
         myPlanet = new Planet("ring-world", Planets.sun, 1f, 2) {{
-            localizedName = "[sky]环界"; // 👈 中文名
-            // 英文名会自动使用注册名 "ring-world"，如果要强制英文名可以加：
-            // name = "[sky]RingWorld"; 
-            
+            localizedName = "[sky]环界"; // 中文名
             accessible = true;
             alwaysUnlocked = true;
             visible = true;
@@ -47,25 +48,13 @@ public class JmMod extends Mod {
             atmosphereRadOut = 0.25f;
             iconColor = Color.valueOf("00e5ff");
             
+            // 在规则里强制挂载天气
             ruleSetter = r -> {
                 r.waves = true;
                 r.waveSpacing = 60f * 60f; 
+                r.weather.add(new WeatherEntry(quantumStorm));
+                r.weather.each(w -> w.always = true);
             };
         }};
-
-        // 2. 注册状态和天气
-        erosionStatus = new QuantumErosionStatus();
-        quantumStorm = new QuantumStormWeather("quantum-storm", erosionStatus);
-
-        // 3. 挂载到原版蓝巨星（原版变量名叫 Planets.blue）
-        Planets.blue.visible = true;
-        Planets.blue.accessible = true;
-        Planets.blue.alwaysUnlocked = true;
-        Planets.blue.iconColor = Color.valueOf("00e5ff");
-        
-        Planets.blue.ruleSetter = r -> {
-            r.weather.add(new WeatherEntry(quantumStorm));
-            r.weather.each(w -> w.always = true); 
-        };
     }
 }
