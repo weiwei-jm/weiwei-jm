@@ -1,7 +1,7 @@
 package jm;
 
 import arc.Core;
-import arc.graphics.Blending; // 👈 新增：用于提亮画面
+import arc.graphics.Blending;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Fill;
@@ -18,8 +18,8 @@ public class QuantumStormWeather extends Weather {
     private final Rand rand = new Rand();
     public mindustry.type.StatusEffect erosionStatus;
 
-    // 👇 降低鲜明度：改用柔和的冰蓝色，不再是纯粹的 00e5ff
-    public Color stormColor = Color.valueOf("a3d5ff"); 
+    // 稍微调白、调暗了一点的蓝色，配合叠加模式会更柔和且发光
+    public Color stormColor = Color.valueOf("80c8ff"); 
 
     public QuantumStormWeather(String name, mindustry.type.StatusEffect erosion) {
         super(name);
@@ -43,16 +43,18 @@ public class QuantumStormWeather extends Weather {
 
     @Override
     public void drawOver(WeatherState state) {
+        // 👇 强制把图层拉到 155.1，盖住所有单位和大部分特效
+        Draw.z(155.1f);
+        
         // 提亮画面：使用叠加发光模式
         Draw.blend(Blending.additive);
         
         Draw.color(stormColor);
-        // 降低透明度，让它只提供一层淡淡的亮蓝色光晕，不遮挡视线
-        Draw.alpha(0.03f * state.opacity()); 
+        // 👇 拉高亮度：把全屏的蓝色薄纱透明度调高到 0.08
+        Draw.alpha(0.08f * state.opacity()); 
         
         Fill.rect(Core.camera.position.x, Core.camera.position.y, Core.graphics.getWidth(), Core.graphics.getHeight());
         
-        // 恢复默认混合模式
         Draw.blend();
         Draw.reset();
     }
@@ -61,11 +63,13 @@ public class QuantumStormWeather extends Weather {
     public void drawUnder(WeatherState state) {
         if (Core.camera == null || state.intensity() <= 0f) return;
 
-        // 提亮粒子：开启发光模式
+        // 👇 同样强制拔高粒子的图层
+        Draw.z(155.1f);
         Draw.blend(Blending.additive);
         
         rand.setSeed(0);
-        int count = (int) (200 * state.intensity());
+        // 增加粒子数量让风暴更密集
+        int count = (int) (300 * state.intensity()); 
 
         for (int i = 0; i < count; i++) {
             float size = rand.random(2f, 6f);
@@ -84,8 +88,8 @@ public class QuantumStormWeather extends Weather {
             }
 
             Draw.color(stormColor);
-            // 粒子透明度可以高一点，因为叠加模式下会非常好看
-            Draw.alpha(state.opacity() * 0.8f); 
+            // 👇 粒子高亮，拉满
+            Draw.alpha(state.opacity()); 
             
             Lines.stroke(size * 0.3f);
             Lines.line(x, y, x - windX * 4f, y); 
