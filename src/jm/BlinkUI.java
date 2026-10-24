@@ -2,40 +2,32 @@ package jm;
 
 import arc.Core;
 import arc.Events;
-import arc.graphics.Color;
 import arc.math.geom.Vec2;
 import mindustry.Vars;
-import mindustry.game.EventType;
 import mindustry.gen.Unit;
-import mindustry.graphics.Layer;
+import mindustry.game.EventType;
+import mindustry.entities.Units;
+import mindustry.entities.abilities.Ability;
 
 public class BlinkUI {
     public static boolean isAiming = false;
 
     public static void init() {
+        // 每次进图重置状态
         Events.on(EventType.WorldLoadEvent.class, e -> {
             isAiming = false;
             BlinkAbility.effects.clear();
         });
 
-        // 手机端画按钮
-        Events.run(EventType.Trigger.draw, () -> {
-            if (Vars.player != null && Vars.control.input.selectedUnits.size > 0) {
-                Draw.z(Layer.max);
-                Draw.color(Color.white);
-                // 在屏幕正中间偏下画个提示，因为手机UI很难精确适配
-                mindustry.graphics.Drawf.rect(Core.graphics.getWidth() / 2f - 50, 100, 100, 50); 
-                // 注：这是测试用的临时位置，如果需要完美按钮，还需进一步写 UI 控件
-            }
-        });
-
+        // 监听触摸事件：当我们处于跃迁瞄准状态时，拦截点击
         Events.run(EventType.Trigger.update, () -> {
             if (isAiming && Vars.player != null) {
                 if (Core.input.isTouched()) {
                     Vec2 pos = Core.input.mouseWorld();
+                    
                     if (Vars.control.input.selectedUnits != null) {
                         for (Unit unit : Vars.control.input.selectedUnits) {
-                            for (mindustry.entities.abilities.Ability ability : unit.abilities) {
+                            for (Ability ability : unit.abilities) {
                                 if (ability instanceof BlinkAbility blink) {
                                     blink.trigger(unit, pos.x, pos.y);
                                 }
@@ -43,15 +35,18 @@ public class BlinkUI {
                         }
                     }
                     isAiming = false;
+                    // 强制清空点击，防止单位自己走过去
+                    Vars.control.input.isTouched = false; 
                 }
             }
         });
     }
 
+    // 这个方法会在玩家点击我们的“跃迁”UI按钮时被调用
     public static void startAiming() {
         if (Vars.control.input.selectedUnits != null && Vars.control.input.selectedUnits.size > 0) {
             Unit unit = Vars.control.input.selectedUnits.first();
-            for (mindustry.entities.abilities.Ability ability : unit.abilities) {
+            for (Ability ability : unit.abilities) {
                 if (ability instanceof BlinkAbility blink) {
                     if (blink.canBlink()) {
                         isAiming = true;
