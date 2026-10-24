@@ -1,6 +1,7 @@
 package jm;
 
 import arc.Core;
+import arc.Events; // 👈 引入事件
 import arc.graphics.Blending;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
@@ -10,6 +11,7 @@ import arc.math.Mathf;
 import arc.math.Rand;
 import arc.util.Time;
 import mindustry.entities.Units;
+import mindustry.game.EventType;
 import mindustry.gen.WeatherState;
 import mindustry.type.Weather;
 import mindustry.world.meta.Attribute;
@@ -18,7 +20,7 @@ public class QuantumStormWeather extends Weather {
     private final Rand rand = new Rand();
     public mindustry.type.StatusEffect erosionStatus;
 
-    // 稍微调白、调暗了一点的蓝色，配合叠加模式会更柔和且发光
+    // 柔和的发光冰蓝色
     public Color stormColor = Color.valueOf("80c8ff"); 
 
     public QuantumStormWeather(String name, mindustry.type.StatusEffect erosion) {
@@ -41,62 +43,61 @@ public class QuantumStormWeather extends Weather {
         }
     }
 
-    @Override
-    public void drawOver(WeatherState state) {
-        // 👇 强制把图层拉到 155.1，盖住所有单位和大部分特效
-        Draw.z(155.1f);
-        
-        // 提亮画面：使用叠加发光模式
-        Draw.blend(Blending.additive);
-        
-        Draw.color(stormColor);
-        // 👇 拉高亮度：把全屏的蓝色薄纱透明度调高到 0.08
-        Draw.alpha(0.08f * state.opacity()); 
-        
-        Fill.rect(Core.camera.position.x, Core.camera.position.y, Core.graphics.getWidth(), Core.graphics.getHeight());
-        
-        Draw.blend();
-        Draw.reset();
-    }
-
-    @Override
-    public void drawUnder(WeatherState state) {
-        if (Core.camera == null || state.intensity() <= 0f) return;
-
-        // 👇 同样强制拔高粒子的图层
-        Draw.z(155.1f);
-        Draw.blend(Blending.additive);
-        
-        rand.setSeed(0);
-        // 增加粒子数量让风暴更密集
-        int count = (int) (300 * state.intensity()); 
-
-        for (int i = 0; i < count; i++) {
-            float size = rand.random(2f, 6f);
-            float speed = rand.random(4f, 8f);
+    // ⚠️ 放弃官方的 drawUnder 和 drawOver，用我们自己的全局事件强制盖在最上层！
+    public void init() {
+        Events.run(EventType.Trigger.draw, () -> {
+            // 检查当前地图里是否正在刮这个风暴
+            boolean active = mindustry.Vars.state.rules.weather.contains(w -> w.weather == this);
+            if (!active) return;
             
-            float y = Core.camera.position.y + rand.random(-Core.camera.height / 2f, Core.camera.height / 2f);
-            float x;
-            float windX;
+            float intensity = 1f; // 风暴强度
 
-            if (rand.chance(0.5f)) {
-                x = Core.camera.position.x - Core.camera.width / 2f + Mathf.mod(rand.random(0f, 1000f) + Time.time * speed, Core.camera.width);
-                windX = speed;
-            } else {
-                x = Core.camera.position.x + Core.camera.width / 2f - Mathf.mod(rand.random(0f, 1000f) + Time.time * speed, Core.camera.width);
-                windX = -speed;
-            }
+            // 1. 拔高图层：直接画在顶层，甚至盖住大部分UI
+            Draw.z(155.1f);
+            Draw.blend(Blending.additive);
 
+            // 2. 画全屏发光遮罩
             Draw.color(stormColor);
-            // 👇 粒子高亮，拉满
-            Draw.alpha(state.opacity()); 
+            Draw.alpha(0.08f * intensity); 
+            Fill.rect(Core.camera.position.x, Core.camera.position.y, Core.graphics.getWidth(), Core.graphics.getHeight());
+
+            // 3. 画粒子（固定数量 300 个，无论怎么缩放都不会变多）
+            rand.setSeed(0);
+            int count = 300; 
+
+            for (int i = 0; i < count; i++) {
+                float size = rand.random(2f, 6f);
+                float speed = rand.random(4f, 8f);
+                
+                // 使用固定数值来生成相对屏幕的随机坐标
+                float yOffset = rand.random(-Core.camera.height / 2f, Core.camera.height / 2f);
+                float y = Core.camera.position.y + yOffset;
+                
+                float x;
+                float windX;
+
+                if (rand.chance(0.5f)) {
+                    // 向右飞
+                    float offsetX = Mathf.mod(rand.random(0f, 1000f) + Time.time * speed, Core.camera.width);
+                    x = Core.camera.position.x - Core.camera.width / 2f + offsetX;
+                    windX = speed;
+                } else {
+                    // 向左飞
+                    float offsetX = Mathf.mod(rand.random(0f, 1000f) + Time.time * speed, Core.camera.width);
+                    x = Core.camera.position.x + Core.camera.width / 2f - offsetX;
+                    windX = -speed;
+                }
+
+                Draw.color(stormColor);
+                Draw.alpha(intensity); // 拉满亮度
+                
+                Lines.stroke(size * 0.3f);
+                Lines.line(x, y, x - windX * 4f, y); 
+                Fill.circle(x, y, size * 0.5f);
+            }
             
-            Lines.stroke(size * 0.3f);
-            Lines.line(x, y, x - windX * 4f, y); 
-            Fill.circle(x, y, size * 0.5f);
-        }
-        
-        Draw.blend();
-        Draw.reset();
+            Draw.blend();
+            Draw.reset();
+        });
     }
-}
+                                              }
