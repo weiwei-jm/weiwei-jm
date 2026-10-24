@@ -8,10 +8,8 @@ import mindustry.content.Planets;
 import mindustry.game.EventType;
 import mindustry.mod.Mod;
 import mindustry.type.Planet;
-import mindustry.type.Weather.WeatherEntry;
 import mindustry.type.StatusEffect;
 import mindustry.graphics.g3d.MultiMesh;
-import mindustry.Vars;
 
 public class JmMod extends Mod {
 
@@ -27,10 +25,10 @@ public class JmMod extends Mod {
 
     @Override
     public void init() {
-        // 1. 初始化跃迁 UI
+        // 1. 初始化跃迁逻辑
         BlinkUI.init();
 
-        // 2. 渲染跃迁特效 (连接线、圆点)
+        // 2. 渲染跃迁特效
         Events.run(EventType.Trigger.draw, () -> {
             for (int i = BlinkAbility.effects.size - 1; i >= 0; i--) {
                 BlinkEffect effect = BlinkAbility.effects.get(i);
@@ -45,7 +43,8 @@ public class JmMod extends Mod {
 
         // 3. 绑定快捷键：按 T 键启动跃迁瞄准
         Events.run(EventType.Trigger.update, () -> {
-            if (Core.input.keyTap(Input.Keys.t)) {
+            // 修复了按键的引用
+            if (Core.input.keyTap(Input.Keys.T)) {
                 BlinkUI.startAiming();
             }
         });
@@ -55,16 +54,10 @@ public class JmMod extends Mod {
     public void loadContent() {
         super.loadContent();
 
-        // ==========================================
-        // 注册状态和天气
-        // ==========================================
         erosionStatus = new QuantumErosionStatus();
         quantumStorm = new QuantumStormWeather("quantum-storm", erosionStatus);
         quantumStorm.localizedName = "量子风暴";
 
-        // ==========================================
-        // 注册你的自定义星球 [sky]环界
-        // ==========================================
         myPlanet = new Planet("ring-world", Planets.sun, 1f, 2) {{
             localizedName = "[sky]环界"; 
             accessible = true;
@@ -87,9 +80,6 @@ public class JmMod extends Mod {
             ruleSetter = r -> {
                 r.waves = true;
                 r.waveSpacing = 60f * 60f; 
-                // 如果想强制每次进图都刮风暴，可以把下面两行解除注释
-                // r.weather.add(new WeatherEntry(quantumStorm));
-                // r.weather.each(w -> w.always = true);
             };
         }};
     }
