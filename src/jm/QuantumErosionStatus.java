@@ -71,51 +71,52 @@ public class QuantumErosionStatus extends StatusEffect {
         }
     }
 
-    @Override
-    public void draw(Unit unit, float time) {
-        // ⚠️ 关键修复：如果不调用这行，原版会在小地图偷偷再画一次，导致特效闪烁！
-        super.draw(unit, time); 
+@Override
+public void draw(Unit unit, float time) {
+    // 调用原版方法保证不闪烁
+    super.draw(unit, time); 
 
-        // 每个单位使用自己的专属随机种子
-        rand.setSeed(unit.id + (long)(Time.time / 3f)); // 每3帧刷新一次位置，产生强烈的“错位闪烁”感
+    // 👇 核心修改 1：强制拔高图层到 155.1，盖住所有单位、墙体甚至大部分 UI
+    Draw.z(155.1f);
+
+    rand.setSeed(unit.id + (long)(Time.time / 3f)); 
+    
+    Draw.color(color);
+    Draw.blend(arc.graphics.Blending.additive); 
+
+    float radius = unit.hitSize / 2f;
+
+    for (int i = 0; i < 6; i++) {
+        float ox = rand.random(-radius, radius);
+        float oy = rand.random(-radius, radius);
+        float size = rand.random(2f, 6f); 
+        float rot = rand.random(360f);    
         
-        Draw.color(color);
-        Draw.blend(arc.graphics.Blending.additive); // 开启叠加发光
-
-        // 随机范围基于单位的体积 (hitSize 的一半就是半径)
-        float radius = unit.hitSize / 2f;
-
-        // 1. 随机方形碎片 (大小和位置完全随机)
-        for (int i = 0; i < 6; i++) {
-            float ox = rand.random(-radius, radius);
-            float oy = rand.random(-radius, radius);
-            float size = rand.random(2f, 6f); // 方块大小
-            float rot = rand.random(360f);    // 随机角度
-            
-            // 一半实心，一半空心，增加层次感
-            if (i % 2 == 0) {
-                Fill.square(unit.x + ox, unit.y + oy, size, rot);
-            } else {
-                Lines.stroke(1.5f);
-                Lines.square(unit.x + ox, unit.y + oy, size, rot);
-            }
+        if (i % 2 == 0) {
+            Fill.square(unit.x + ox, unit.y + oy, size, rot);
+        } else {
+            Lines.stroke(1.5f);
+            Lines.square(unit.x + ox, unit.y + oy, size, rot);
         }
-
-        // 2. 随机三角形碎片 (像玻璃碴子一样)
-        for (int i = 0; i < 5; i++) {
-            float ox = rand.random(-radius * 1.2f, radius * 1.2f);
-            float oy = rand.random(-radius * 1.2f, radius * 1.2f);
-            float size = rand.random(3f, 8f);
-            float rot = rand.random(360f);
-            
-            Fill.tri(
-                unit.x + ox + Mathf.cosDeg(rot) * size, unit.y + oy + Mathf.sinDeg(rot) * size,
-                unit.x + ox + Mathf.cosDeg(rot + 120) * size, unit.y + oy + Mathf.sinDeg(rot + 120) * size,
-                unit.x + ox + Mathf.cosDeg(rot + 240) * size, unit.y + oy + Mathf.sinDeg(rot + 240) * size
-            );
-        }
-
-        Draw.blend();
-        Draw.reset();
     }
+
+    for (int i = 0; i < 5; i++) {
+        float ox = rand.random(-radius * 1.2f, radius * 1.2f);
+        float oy = rand.random(-radius * 1.2f, radius * 1.2f);
+        float size = rand.random(3f, 8f);
+        float rot = rand.random(360f);
+        
+        Fill.tri(
+            unit.x + ox + Mathf.cosDeg(rot) * size, unit.y + oy + Mathf.sinDeg(rot) * size,
+            unit.x + ox + Mathf.cosDeg(rot + 120) * size, unit.y + oy + Mathf.sinDeg(rot + 120) * size,
+            unit.x + ox + Mathf.cosDeg(rot + 240) * size, unit.y + oy + Mathf.sinDeg(rot + 240) * size
+        );
+    }
+
+    Draw.blend();
+    
+    // 👇 核心修改 2：画完之后一定要 Reset，把图层还给后面的渲染，否则整局游戏会卡死
+    Draw.z(mindustry.graphics.Layer.effect); 
+    Draw.reset();
+                              }
 }
