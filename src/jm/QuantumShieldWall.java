@@ -26,11 +26,9 @@ public class QuantumShieldWall extends Block {
     public float powerUse = 2f;
     public float maxConnectDist = 10f * 8f; 
 
-    // 远古色系：青蓝色
     public static final Color ancientColor = Color.valueOf("00e5ff");
     public static final Color ancientFront = ancientColor.cpy().lerp(Color.white, 0.45f);
 
-    // 👇 完美复刻 NHFx.chainLightningFade 的闪电折痕特效
     public static final Effect lightningFx = new Effect(20f, 500f, e -> {
         if (!(e.data instanceof Position)) return;
         Position target = e.data();
@@ -41,7 +39,7 @@ public class QuantumShieldWall extends Block {
         float normx = (tx - e.x) / dst;
         float normy = (ty - e.y) / dst;
         
-        int links = Mathf.ceil(dst / 20f); // 每20像素一段折痕
+        int links = Mathf.ceil(dst / 20f); 
         float spacing = dst / links;
         
         Lines.stroke(3f * Mathf.curve(e.fout(), 0, 0.7f));
@@ -54,7 +52,7 @@ public class QuantumShieldWall extends Block {
         Rand rand = new Rand();
         rand.setSeed(e.id);
         
-        float fin = Mathf.curve(e.fin(), 0, 0.5f); // 闪电蔓延动画
+        float fin = Mathf.curve(e.fin(), 0, 0.5f); 
         int i;
         float nx = e.x, ny = e.y;
         
@@ -63,7 +61,6 @@ public class QuantumShieldWall extends Block {
                 nx = tx; ny = ty;
             } else {
                 float len = (i + 1) * spacing;
-                // 在 30度角以内随机偏移 (tan(30) ≈ 0.57)
                 float offsetMag = spacing * 0.57f;
                 float ox = rand.range(offsetMag);
                 float oy = rand.range(offsetMag);
@@ -73,7 +70,6 @@ public class QuantumShieldWall extends Block {
             Lines.linePoint(nx, ny);
         }
         
-        // 蔓延的最前端发光
         if (i < links) {
             float f = Mathf.clamp(fin * links % 1);
             float len = (i + 1) * spacing;
@@ -142,10 +138,39 @@ public class QuantumShieldWall extends Block {
             if (power == null || power.status < 0.5f || shield <= 0) return;
 
             Draw.z(Layer.effect);
-            // 👇 开启发光混合模式，这是新视界能量感的核心
             Draw.blend(Blending.additive);
             
             for (int i = 0; i < 4; i++) {
                 Building other = nearby(i);
                 if (other instanceof QuantumShieldWallBuild wall) {
-   
+                    if (wall.shield > 0 && wall.power.status >= 0.5f) {
+                        float dst = Mathf.dst(x, y, wall.x, wall.y);
+                        if (dst <= maxConnectDist) {
+ Draw.color(ancientColor, 0.3f);
+                            Lines.stroke(8f); 
+                            Lines.line(x, y, wall.x, wall.y);
+                            
+                            Draw.color(ancientFront);
+                            Lines.stroke(3f); 
+                            Lines.line(x, y, wall.x, wall.y);
+
+                            Draw.color(ancientColor);
+                            Fill.circle(x, y, 6f);
+                            Fill.circle(wall.x, wall.y, 6f);
+                            Draw.color(Color.white);
+                            Fill.circle(x, y, 3f);
+                            Fill.circle(wall.x, wall.y, 3f);
+
+                            if (Mathf.chance(0.15f)) {
+                                lightningFx.at(x, y, 0, ancientColor, new Vec2(wall.x, wall.y));
+                            }
+                        }
+                    }
+                }
+            }
+            
+            Draw.blend(); 
+            Draw.reset();
+        }
+    }
+                                }
