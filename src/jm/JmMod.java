@@ -3,6 +3,7 @@ package jm;
 import arc.Core;
 import arc.Events;
 import arc.graphics.Color;
+import arc.math.Mathf;
 import arc.math.geom.Vec2;
 import mindustry.content.Planets;
 import mindustry.game.EventType;
@@ -26,58 +27,133 @@ public class JmMod extends Mod {
 
     @Override
     public void init() {
-    // 1. 进游戏给匕首加能力
-    Events.on(EventType.WorldLoadEvent.class, e -> {
-        mindustry.content.UnitTypes.dagger.abilities.add(new BlinkAbility());
-        mindustry.content.UnitTypes.flare.abilities.add(new BlinkAbility());
-    });
+        // 1. 给原版单位加能力测试
+        Events.on(EventType.WorldLoadEvent.class, e -> {
+            mindustry.content.UnitTypes.dagger.abilities.add(new BlinkAbility());
+            mindustry.content.UnitTypes.flare.abilities.add(new BlinkAbility());
+        });
 
-    // 2. 核心监听：原版指挥模式点击事件
-    Events.run(EventType.Trigger.update, () -> {
-        // 如果玩家在指挥模式，且按下了鼠标左键 / 手指触摸了屏幕
-        if (Vars.player != null && Vars.control != null && Vars.control.input.commandMode) {
-            if (Core.input.isTouched()) {
-                // 👇 加上这个判断，防止点到了 UI 面板时也触发瞬移
-                if (Core.scene.hasMouse()) return;
-
-                Vec2 pos = Core.input.mouseWorld();
-
-                if (Vars.control.input.selectedUnits != null) {
-                    for (Unit unit : Vars.control.input.selectedUnits) {
-                        for (mindustry.entities.abilities.Ability ability : unit.abilities) {
-                            if (ability instanceof BlinkAbility blink) {
-                                // 直接触发瞬移！把目的地传给单位
-                                blink.trigger(unit, pos.x, pos.y);
-                                
-                                // 拦截原版的移动指令，避免它又跑又闪
-                                if (unit.controller() instanceof mindustry.ai.types.CommandAI ai) {
-                                    ai.targetPos = null;
+        // 2. 核心监听：指挥模式点击触发跃迁
+        Events.run(EventType.Trigger.update, () -> {
+            if (Vars.player != null && Vars.control != null && Vars.control.input.commandMode) {
+                if (Core.input.isTouched()) {
+                    if (Core.scene.hasMouse()) return;
+                    Vec2 pos = Core.input.mouseWorld();
+                    if (Vars.control.input.selectedUnits != null) {
+                        for (Unit unit : Vars.control.input.selectedUnits) {
+                            for (mindustry.entities.abilities.Ability ability : unit.abilities) {
+                                if (ability instanceof BlinkAbility blink) {
+                                    blink.trigger(unit, pos.x, pos.y);
+                                    if (unit.controller() instanceof mindustry.ai.types.CommandAI ai) {
+                                        ai.targetPos = null;
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-        }
-    });
+        });
 
-    // 3. 渲染特效
-    Events.run(EventType.Trigger.draw, () -> {
-        for (int i = BlinkAbility.effects.size - 1; i >= 0; i--) {
-            BlinkEffect effect = BlinkAbility.effects.get(i);
-            effect.update();
-            if (effect.isDead()) {
-                BlinkAbility.effects.remove(i);
-            } else {
-                effect.draw();
+        // 3. 渲染跃迁特效
+        Events.run(EventType.Trigger.draw, () -> {
+            for (int i = BlinkAbility.effects.size - 1; i >= 0; i--) {
+                BlinkEffect effect = BlinkAbility.effects.get(i);
+                effect.update();
+                if (effect.isDead()) {
+                    BlinkAbility.effects.remove(i);
+                } else {
+                    effect.draw();
+                }
             }
-        }
-    });
-}
+        });
+
+        // 👇 4. 核心视觉动画：绑定到【终代核心 (Nucleus)】 👇
+        Events.on(EventType.UnitCreateEvent.class, e -> {
+            Unit unit = e.unit;
+            if (unit == null || !unit.isPlayer() || Vars.state == null || Vars.world == null) return;
+            
+            // 判断当前队伍的核心是不是终代核心（Nucleus）
+            if (unit.team.core() != null && unit.team.core().block == mindustry.content.Blocks.coreNucleus) {
+                
+                // 获取核心的位置
+                float coreX = unit.team.core().x;
+                float coreY = unit.team.core().y;
+                
+                // 如果单位是在核心附近生成的
+                if (Mathf.dst(unit.x, unit.y, coreX, coreY) < 120f) {
+                    
+                    // 获取地图最右侧边界
+                    float rightEdge = Vars.world.width() * Vars.tilesize;
+                    
+                    // 召唤一个视觉替身
+                    Unit visualOct = mindustry.content.UnitTypes.flare.create(unit.team);
+                    visualOct.x = rightEdge;
+                    visualOct.y = coreY;
+                    visualOct.add();
+                    
+                    // 给它身上疯狂喷射跃迁用的蓝色粒子和线
+                    arc.util.Timer.schedule(() -> {
+                        if (visualOct.isValid()) {
+                            mindustry.content.Fx.chainLightning.at(visualOct.x, visualOct.y, 0, Color.valueOf("00e5ff"));
+                        }
+                    }, 0f, 0.1f);
+
+                    // 3 秒后，让它“飞”到核心旁边并消失，同时引爆全屏跃迁特效
+                    arc.util.Time.run(180f, () -> {
+                        if (visualOct.isValid()) {
+                            visualOct.x = coreX + 40f;
+                            visualOct.kill();
+                            
+                            // 触发你的专属特效！（核心处的爆炸）
+                            BlinkAbility.effects.add(new BlinkEffect(
+                                coreX, coreY, coreX, coreY, 
+                                0, 0, 
+                                Color.valueOf("00e5ff"), unit.type
+                            ));
+                            
+                            // 屏幕震动，感受史诗感
+                            if (unit == Vars.player.unit()) {
+                                Vars.renderer.shake(10f, 20f);
+                            }
+                        }
+                    });
+                }
+            }
+        });
+    }
 
     @Override
     public void loadContent() {
         super.loadContent();
-        // 这里保留你之前的星球和天气代码，不用动...
+
+        erosionStatus = new QuantumErosionStatus();
+        quantumStorm = new QuantumStormWeather("quantum-storm", erosionStatus);
+        quantumStorm.localizedName = "量子风暴";
+
+        myPlanet = new Planet("ring-world", Planets.sun, 1f, 2) {{
+            localizedName = "[sky]环界"; 
+            accessible = true;
+            alwaysUnlocked = true;
+            visible = true;
+            
+            meshLoader = () -> new JmPlanet(this);
+            
+            cloudMeshLoader = () -> new MultiMesh(
+                new DysonRingMesh(this, 1.5f, 0.1f, 729, Color.valueOf("555555"), Color.valueOf("555555"), false),
+                new DysonRingMesh(this, 1.8f, 0.1f, 2941, Color.valueOf("555555"), Color.valueOf("555555"), false),
+                new DysonRingMesh(this, 2.1f, 0.1f, 3834, Color.valueOf("555555"), Color.valueOf("555555"), false)
+            );
+            
+            atmosphereColor = Color.valueOf("00e5ff");
+            atmosphereRadIn = 0.05f;
+            atmosphereRadOut = 0.25f;
+            iconColor = Color.valueOf("00e5ff");
+            
+            ruleSetter = r -> {
+                r.waves = true;
+                r.waveSpacing = 60f * 60f; 
+            };
+        }};
     }
-                        }
+}
