@@ -71,42 +71,42 @@ public class JmMod extends Mod {
         // 👇 4. 核心发射动画（已彻底删除） 👈
     }
 
-    @Override
-    public void loadContent() {
-        super.loadContent();
+@Override
+public void loadContent() {
+    super.loadContent();
 
-        // 注册量子风暴状态和天气
-        erosionStatus = new QuantumErosionStatus();
-        quantumStorm = new QuantumStormWeather("quantum-storm", erosionStatus);
-        quantumStorm.localizedName = "量子风暴";
+    // 注册量子风暴状态和天气
+    erosionStatus = new QuantumErosionStatus();
+    quantumStorm = new QuantumStormWeather("quantum-storm", erosionStatus);
+    quantumStorm.localizedName = "量子风暴";
 
-        // 注册环界星球
-        myPlanet = new Planet("ring-world", Planets.sun, 1f, 2) {{
-            localizedName = "[sky]环界"; 
-            accessible = true;
-            alwaysUnlocked = true;
-            visible = true;
-            
-            meshLoader = () -> new JmPlanet(this);
-            
-            cloudMeshLoader = () -> new MultiMesh(
-                new DysonRingMesh(this, 1.5f, 0.1f, 729, Color.valueOf("555555"), Color.valueOf("555555"), false),
-                new DysonRingMesh(this, 1.8f, 0.1f, 2941, Color.valueOf("555555"), Color.valueOf("555555"), false),
-                new DysonRingMesh(this, 2.1f, 0.1f, 3834, Color.valueOf("555555"), Color.valueOf("555555"), false)
-            );
-            
-            atmosphereColor = Color.valueOf("00e5ff");
-            atmosphereRadIn = 0.05f;
-            atmosphereRadOut = 0.25f;
-            iconColor = Color.valueOf("00e5ff");
-            
-            ruleSetter = r -> {
-                r.waves = true;
-                r.waveSpacing = 60f * 60f; 
-            };
-        }};
+    // 注册环界星球
+    myPlanet = new Planet("ring-world", Planets.sun, 1f, 2) {{
+        localizedName = "[sky]环界"; 
+        accessible = true;
+        alwaysUnlocked = true;
+        visible = true;
+        
+        meshLoader = () -> new JmPlanet(this);
+        
+        cloudMeshLoader = () -> new MultiMesh(
+            new DysonRingMesh(this, 1.5f, 0.1f, 729, Color.valueOf("555555"), Color.valueOf("555555"), false),
+            new DysonRingMesh(this, 1.8f, 0.1f, 2941, Color.valueOf("555555"), Color.valueOf("555555"), false),
+            new DysonRingMesh(this, 2.1f, 0.1f, 3834, Color.valueOf("555555"), Color.valueOf("555555"), false)
+        );
+        
+        atmosphereColor = Color.valueOf("00e5ff");
+        atmosphereRadIn = 0.05f;
+        atmosphereRadOut = 0.25f;
+        iconColor = Color.valueOf("00e5ff");
+        
+        ruleSetter = r -> {
+            r.waves = true;
+            r.waveSpacing = 60f * 60f; 
+        };
+    }};
 
-        // 注册量子护盾防御塔
-        quantumShieldWall = new QuantumShieldWall("quantum-shield-wall");
-    }
-}
+    // 👇 核心修改：实例化并强行注册到游戏方块库中
+    quantumShieldWall = new QuantumShieldWall("quantum-shield-wall");
+    Vars.content.blocks().add(quantumShieldWall);
+                }
