@@ -19,7 +19,7 @@ public class JmMod extends Mod {
     public static Planet myPlanet;
     public static StatusEffect erosionStatus;
     public static QuantumStormWeather quantumStorm;
-    public static QuantumShieldWall quantumShieldWall; 
+    public static QuantumShieldWall quantumShieldWall;
 
     public JmMod() {
         super();
@@ -27,11 +27,13 @@ public class JmMod extends Mod {
 
     @Override
     public void init() {
+        // 1. 给原版单位加能力测试
         Events.on(EventType.WorldLoadEvent.class, e -> {
             mindustry.content.UnitTypes.dagger.abilities.add(new BlinkAbility());
             mindustry.content.UnitTypes.flare.abilities.add(new BlinkAbility());
         });
 
+        // 2. 指挥模式点击触发跃迁
         Events.run(EventType.Trigger.update, () -> {
             if (Vars.player != null && Vars.control != null && Vars.control.input.commandMode) {
                 if (Core.input.isTouched()) {
@@ -53,6 +55,7 @@ public class JmMod extends Mod {
             }
         });
 
+        // 3. 渲染跃迁特效
         Events.run(EventType.Trigger.draw, () -> {
             for (int i = BlinkAbility.effects.size - 1; i >= 0; i--) {
                 BlinkEffect effect = BlinkAbility.effects.get(i);
@@ -102,4 +105,4 @@ public class JmMod extends Mod {
         quantumShieldWall = new QuantumShieldWall("quantum-shield-wall");
         Vars.content.blocks().add(quantumShieldWall);
     }
-}
+                    }
