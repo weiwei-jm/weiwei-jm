@@ -24,10 +24,45 @@ public class JmMod extends Mod {
 
     @Override
 public void init() {
-    BlinkUI.init();
+    // 进游戏打印测试
+    Events.on(EventType.WorldLoadEvent.class, e -> {
+        arc.util.Log.info("==== [测试探针] 世界加载事件触发！ ====");
+        arc.util.Log.info("==== [测试探针] 开始强行给所有兵种注入跃迁能力 ====");
+        
+        // 遍历所有原版单位
+        mindustry.content.UnitTypes.all.each(unitType -> {
+            // 检查一下有没有加过，防止重复添加报错
+            boolean has = false;
+            for (mindustry.entities.abilities.Ability a : unitType.abilities) {
+                if (a instanceof BlinkAbility) has = true;
+            }
+            if (!has) {
+                unitType.abilities.add(new BlinkAbility());
+                arc.util.Log.info("已给单位注入跃迁: " + unitType.localizedName);
+            }
+        });
+        arc.util.Log.info("==== [测试探针] 注入完成！ ====");
+    });
 
-    // 渲染跃迁特效
-    arc.Events.run(mindustry.game.EventType.Trigger.draw, () -> {
+    // 监听指挥模式点击
+    Events.run(EventType.Trigger.update, () -> {
+        if (Vars.player != null && Vars.control.input.commandMode && Core.input.isTouched()) {
+            Vec2 pos = Core.input.mouseWorld();
+            if (Vars.control.input.selectedUnits != null) {
+                for (Unit unit : Vars.control.input.selectedUnits) {
+                    for (mindustry.entities.abilities.Ability ability : unit.abilities) {
+                        if (ability instanceof BlinkAbility blink) {
+                            blink.setDestination(pos.x, pos.y);
+                            unit.vel.setZero(); 
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // 渲染特效
+    Events.run(EventType.Trigger.draw, () -> {
         for (int i = BlinkAbility.effects.size - 1; i >= 0; i--) {
             BlinkEffect effect = BlinkAbility.effects.get(i);
             effect.update();
@@ -38,15 +73,8 @@ public void init() {
             }
         }
     });
-
-    // 👇 终极修法：直接调用原版的 KeyCode 枚举，绝对不会有问题
-    arc.Events.run(mindustry.game.EventType.Trigger.update, () -> {
-        if (arc.Core.input.keyTap(arc.input.KeyCode.t)) {
-            BlinkUI.startAiming();
-        }
-    });
-}
-
+                }
+    
     @Override
     public void loadContent() {
         super.loadContent();
