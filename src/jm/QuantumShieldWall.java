@@ -13,11 +13,12 @@ import mindustry.graphics.Pal;
 import mindustry.type.Category;
 import mindustry.type.ItemStack;
 import mindustry.world.Block;
-import mindustry.world.meta.Stat; // 如果不用可以删掉
+import mindustry.world.draw.DrawDefault;
+import mindustry.world.meta.BuildVisibility; // 👈 引入沙盒可见
 
 public class QuantumShieldWall extends Block {
     public float shieldCapacity = 2000f;
-    public float shieldRegenTime = 240f; // 4秒
+    public float shieldRegenTime = 240f; 
     public float damageOnTouch = 10f;
     public float powerUse = 2f;
 
@@ -34,10 +35,15 @@ public class QuantumShieldWall extends Block {
         health = 3200;
         armor = 10f;
         category = Category.defense;
+        
+        // 👇 强行设置它在沙盒模式中可见，并在建造菜单中显示
+        buildVisibility = BuildVisibility.sandboxOnly; 
+        
+        // 👇 给它一个原版的默认绘制器，这样它就不会隐形了
+        drawer = new DrawDefault();
+        
         requirements(Category.defense, ItemStack.with(Items.titanium, 100, Items.lead, 80, Items.silicon, 60));
     }
-
-    // 👇 报错的 setStats 已经彻底删了！
 
     public class QuantumShieldWallBuild extends Building {
         public float shield = shieldCapacity;
@@ -47,13 +53,11 @@ public class QuantumShieldWall extends Block {
         public void update() {
             super.update();
 
-            // 没电就重置护盾
             if (power == null || power.status < 0.5f) {
                 shield = 0f;
                 return;
             }
 
-            // 护盾回复
             if (shield < shieldCapacity) {
                 shieldTimer += Time.delta;
                 if (shieldTimer >= shieldRegenTime) {
@@ -62,7 +66,6 @@ public class QuantumShieldWall extends Block {
                 }
             }
 
-            // 检测并伤害碰触护盾的敌方陆军单位
             if (shield > 0) {
                 mindustry.entities.Units.nearby(x, y, size * 8f, size * 8f, u -> {
                     if (u.team != team && u.isGrounded()) {
@@ -77,10 +80,9 @@ public class QuantumShieldWall extends Block {
 
         @Override
         public void draw() {
-            super.draw();
+            super.draw(); // 必须调用父类的 draw，这样才能画出那个默认的方块底图
             if (power == null || power.status < 0.5f || shield <= 0) return;
 
-            // 画连接线和闪电
             Draw.z(Layer.effect);
             for (int i = 0; i < 4; i++) {
                 Building other = nearby(i);
@@ -113,4 +115,4 @@ public class QuantumShieldWall extends Block {
             Draw.reset();
         }
     }
-                }
+                 }
