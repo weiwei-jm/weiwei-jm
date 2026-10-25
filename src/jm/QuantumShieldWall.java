@@ -137,7 +137,6 @@ public class QuantumShieldWall extends Block {
                                 if (dst <= maxConnectDist && (sameX || sameY)) {
                                     // 计算敌人到线段的距离
                                     float lineDst = Mathf.dstLine(u.x, u.y, x, y, wall.x, wall.y);
-                              (u.x, u.y, x, y, wall.x, wall.y);
                                     
                                     // 如果敌人撞在了光束上（距离线小于 12 像素）
                                     if (lineDst < 12f) {
@@ -200,4 +199,4 @@ public class QuantumShieldWall extends Block {
             Draw.reset();
         }
     }
-                                        }
+}
