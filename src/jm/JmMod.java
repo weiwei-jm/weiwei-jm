@@ -3,7 +3,6 @@ package jm;
 import arc.Core;
 import arc.Events;
 import arc.graphics.Color;
-import arc.math.Mathf;
 import arc.math.geom.Vec2;
 import mindustry.content.Planets;
 import mindustry.game.EventType;
@@ -20,6 +19,7 @@ public class JmMod extends Mod {
     public static Planet myPlanet;
     public static StatusEffect erosionStatus;
     public static QuantumStormWeather quantumStorm;
+    public static QuantumShieldWall quantumShieldWall; // 👈 新增的防御塔
 
     public JmMod() {
         super();
@@ -27,13 +27,13 @@ public class JmMod extends Mod {
 
     @Override
     public void init() {
-        // 1. 给原版单位加能力测试
+        // 1. 给原版单位加跃迁能力（方便测试）
         Events.on(EventType.WorldLoadEvent.class, e -> {
             mindustry.content.UnitTypes.dagger.abilities.add(new BlinkAbility());
             mindustry.content.UnitTypes.flare.abilities.add(new BlinkAbility());
         });
 
-        // 2. 核心监听：指挥模式点击触发跃迁
+        // 2. 指挥模式点击触发跃迁
         Events.run(EventType.Trigger.update, () -> {
             if (Vars.player != null && Vars.control != null && Vars.control.input.commandMode) {
                 if (Core.input.isTouched()) {
@@ -68,69 +68,19 @@ public class JmMod extends Mod {
             }
         });
 
-        // 👇 4. 核心视觉动画：绑定到【终代核心 (Nucleus)】 👇
-        Events.on(EventType.UnitCreateEvent.class, e -> {
-            Unit unit = e.unit;
-            if (unit == null || !unit.isPlayer() || Vars.state == null || Vars.world == null) return;
-            
-            // 判断当前队伍的核心是不是终代核心（Nucleus）
-            if (unit.team.core() != null && unit.team.core().block == mindustry.content.Blocks.coreNucleus) {
-                
-                // 获取核心的位置
-                float coreX = unit.team.core().x;
-                float coreY = unit.team.core().y;
-                
-                // 如果单位是在核心附近生成的
-                if (Mathf.dst(unit.x, unit.y, coreX, coreY) < 120f) {
-                    
-                    // 获取地图最右侧边界
-                    float rightEdge = Vars.world.width() * Vars.tilesize;
-                    
-                    // 召唤一个视觉替身
-                    Unit visualOct = mindustry.content.UnitTypes.flare.create(unit.team);
-                    visualOct.x = rightEdge;
-                    visualOct.y = coreY;
-                    visualOct.add();
-                    
-                    // 给它身上疯狂喷射跃迁用的蓝色粒子和线
-                    arc.util.Timer.schedule(() -> {
-                        if (visualOct.isValid()) {
-                            mindustry.content.Fx.chainLightning.at(visualOct.x, visualOct.y, 0, Color.valueOf("00e5ff"));
-                        }
-                    }, 0f, 0.1f);
-
-                    // 3 秒后，让它“飞”到核心旁边并消失，同时引爆全屏跃迁特效
-                    arc.util.Time.run(180f, () -> {
-                        if (visualOct.isValid()) {
-                            visualOct.x = coreX + 40f;
-                            visualOct.kill();
-                            
-                            // 触发你的专属特效！（核心处的爆炸）
-                            BlinkAbility.effects.add(new BlinkEffect(
-                                coreX, coreY, coreX, coreY, 
-                                0, 0, 
-                                Color.valueOf("00e5ff"), unit.type
-                            ));
-                            
-                            // 屏幕震动，感受史诗感
-                            if (unit == Vars.player.unit()) {
-                                Vars.renderer.shake(10f, 20f);
-                            }
-                        }
-                    });
-                }
-            }
-        });
+        // 👇 4. 核心发射动画（已彻底删除） 👈
     }
 
     @Override
     public void loadContent() {
         super.loadContent();
 
+        // 注册量子风暴状态和天气
         erosionStatus = new QuantumErosionStatus();
         quantumStorm = new QuantumStormWeather("quantum-storm", erosionStatus);
         quantumStorm.localizedName = "量子风暴";
 
+        // 注册环界星球
         myPlanet = new Planet("ring-world", Planets.sun, 1f, 2) {{
             localizedName = "[sky]环界"; 
             accessible = true;
@@ -155,5 +105,8 @@ public class JmMod extends Mod {
                 r.waveSpacing = 60f * 60f; 
             };
         }};
+
+        // 注册量子护盾防御塔
+        quantumShieldWall = new QuantumShieldWall("quantum-shield-wall");
     }
 }
