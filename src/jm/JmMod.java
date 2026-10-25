@@ -25,8 +25,7 @@ public class JmMod extends Mod {
     }
 
     @Override
-@Override
-public void init() {
+    public void init() {
     // 1. 进游戏给匕首加能力
     Events.on(EventType.WorldLoadEvent.class, e -> {
         mindustry.content.UnitTypes.dagger.abilities.add(new BlinkAbility());
