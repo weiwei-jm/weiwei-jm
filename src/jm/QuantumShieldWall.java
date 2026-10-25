@@ -10,6 +10,7 @@ import arc.math.Rand;
 import arc.math.geom.Position;
 import arc.math.geom.Vec2;
 import arc.util.Time;
+import mindustry.content.Fx;
 import mindustry.content.Items;
 import mindustry.entities.Effect;
 import mindustry.gen.Building;
@@ -22,9 +23,9 @@ import mindustry.world.meta.BuildVisibility;
 public class QuantumShieldWall extends Block {
     public float shieldCapacity = 2000f;
     public float shieldRegenTime = 240f; 
-    public float damageOnTouch = 10f;
+    public float damageOnTouch = 100f; // 碰一下极其致命
     public float powerUse = 2f;
-    public float maxConnectDist = 10f * 8f; // 最大连接距离 10格 (80像素)
+    public float maxConnectDist = 10f * 8f; 
 
     public static final Color ancientColor = Color.valueOf("00e5ff");
     public static final Color ancientFront = ancientColor.cpy().lerp(Color.white, 0.45f);
@@ -123,11 +124,33 @@ public class QuantumShieldWall extends Block {
             }
 
             if (shield > 0) {
-                mindustry.entities.Units.nearby(x, y, size * 8f, size * 8f, u -> {
+                mindustry.entities.Units.nearby(x, y, maxConnectDist, maxConnectDist, u -> {
                     if (u.team != team && u.isGrounded()) {
-                        u.damage(damageOnTouch);
-                        float angle = Mathf.angle(x - u.x, y - u.y);
-                        u.vel.add(Mathf.cosDeg(angle) * 3f, Mathf.sinDeg(angle) * 3f);
+                        // 检查敌人是不是刚好在我们的十字连线上
+                        for (int i = 0; i < 4; i++) {
+                            Building other = nearby(i);
+                            if (other instanceof QuantumShieldWallBuild wall && wall.shield > 0) {
+                                float dst = Mathf.dst(x, y, wall.x, wall.y);
+                                boolean sameX = Math.abs(this.x - wall.x) < 1f;
+                                boolean sameY = Math.abs(this.y - wall.y) < 1f;
+                                
+                                if (dst <= maxConnectDist && (sameX || sameY)) {
+                                    // 计算敌人到线段的距离
+                                    float lineDst = Mathf.dstLine(u.x, u.y, x, y, wall.x, wall.y);
+                              (u.x, u.y, x, y, wall.x, wall.y);
+                                    
+                                    // 如果敌人撞在了光束上（距离线小于 12 像素）
+                                    if (lineDst < 12f) {
+                                        u.damageContinuous(damageOnTouch); // 持续受到高额伤害
+                                        
+                                        // 纯视觉效果，不影响移动
+                                        if (Mathf.chance(0.2f)) {
+                                            Fx.chainLightning.at(u.x, u.y, 0, ancientColor);
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 });
             }
@@ -144,13 +167,10 @@ public class QuantumShieldWall extends Block {
                 if (b != this && b instanceof QuantumShieldWallBuild wall && b.team == this.team) {
                     if (wall.shield > 0 && wall.power.status >= 0.5f) {
                         float dst = Mathf.dst(x, y, wall.x, wall.y);
-                        
-            // 👇 核心判定：必须在 10 格内，且 X 坐标相同或 Y 坐标相同（十字向）
                         boolean sameX = Math.abs(this.x - wall.x) < 1f;
                         boolean sameY = Math.abs(this.y - wall.y) < 1f;
                         
                         if (dst <= maxConnectDist && (sameX || sameY)) {
-                            // 只让 id 较小的塔负责画线，防止重复渲染
                             if (this.id < wall.id) {
                                 Draw.color(ancientColor, 0.3f);
                                 Lines.stroke(8f); 
@@ -180,4 +200,4 @@ public class QuantumShieldWall extends Block {
             Draw.reset();
         }
     }
-                                           }
+                                        }
