@@ -13,8 +13,6 @@ import mindustry.graphics.Pal;
 import mindustry.type.Category;
 import mindustry.type.ItemStack;
 import mindustry.world.Block;
-import mindustry.world.draw.DrawDefault;
-import mindustry.world.meta.BuildVisibility; // 👈 引入沙盒可见
 
 public class QuantumShieldWall extends Block {
     public float shieldCapacity = 2000f;
@@ -35,12 +33,6 @@ public class QuantumShieldWall extends Block {
         health = 3200;
         armor = 10f;
         category = Category.defense;
-        
-        // 👇 强行设置它在沙盒模式中可见，并在建造菜单中显示
-        buildVisibility = BuildVisibility.sandboxOnly; 
-        
-        // 👇 给它一个原版的默认绘制器，这样它就不会隐形了
-        drawer = new DrawDefault();
         
         requirements(Category.defense, ItemStack.with(Items.titanium, 100, Items.lead, 80, Items.silicon, 60));
     }
@@ -80,7 +72,7 @@ public class QuantumShieldWall extends Block {
 
         @Override
         public void draw() {
-            super.draw(); // 必须调用父类的 draw，这样才能画出那个默认的方块底图
+            // 因为没有贴图，所以连 super.draw() 都不需要调了，直接画线！
             if (power == null || power.status < 0.5f || shield <= 0) return;
 
             Draw.z(Layer.effect);
@@ -115,4 +107,4 @@ public class QuantumShieldWall extends Block {
             Draw.reset();
         }
     }
-                 }
+}
