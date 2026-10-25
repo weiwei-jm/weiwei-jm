@@ -3,12 +3,15 @@ package jm;
 import arc.Core;
 import arc.Events;
 import arc.graphics.Color;
+import arc.math.geom.Vec2;
 import mindustry.content.Planets;
 import mindustry.game.EventType;
+import mindustry.gen.Unit;
 import mindustry.mod.Mod;
 import mindustry.type.Planet;
 import mindustry.type.StatusEffect;
 import mindustry.graphics.g3d.MultiMesh;
+import mindustry.Vars; // 👈 补上了 Vars
 
 public class JmMod extends Mod {
 
@@ -23,58 +26,55 @@ public class JmMod extends Mod {
     }
 
     @Override
-public void init() {
-    // 进游戏打印测试
-    Events.on(EventType.WorldLoadEvent.class, e -> {
-        arc.util.Log.info("==== [测试探针] 世界加载事件触发！ ====");
-        arc.util.Log.info("==== [测试探针] 开始强行给所有兵种注入跃迁能力 ====");
-        
-        // 遍历所有原版单位
-        mindustry.content.UnitTypes.all.each(unitType -> {
-            // 检查一下有没有加过，防止重复添加报错
-            boolean has = false;
-            for (mindustry.entities.abilities.Ability a : unitType.abilities) {
-                if (a instanceof BlinkAbility) has = true;
+    public void init() {
+        // 进游戏打印测试
+        Events.on(EventType.WorldLoadEvent.class, e -> {
+            arc.util.Log.info("==== [测试探针] 世界加载事件触发！ ====");
+            
+            // 直接给匕首和星辉加能力（去掉了报错的 UnitTypes.all）
+            if (!mindustry.content.UnitTypes.dagger.abilities.contains(BlinkAbility.class)) {
+                mindustry.content.UnitTypes.dagger.abilities.add(new BlinkAbility());
+                arc.util.Log.info("已给匕首注入跃迁: ");
             }
-            if (!has) {
-                unitType.abilities.add(new BlinkAbility());
-                arc.util.Log.info("已给单位注入跃迁: " + unitType.localizedName);
+            if (!mindustry.content.UnitTypes.flare.abilities.contains(BlinkAbility.class)) {
+                mindustry.content.UnitTypes.flare.abilities.add(new BlinkAbility());
+                arc.util.Log.info("已给星辉注入跃迁: ");
             }
+            arc.util.Log.info("==== [测试探针] 注入完成！ ====");
         });
-        arc.util.Log.info("==== [测试探针] 注入完成！ ====");
-    });
 
-    // 监听指挥模式点击
-    Events.run(EventType.Trigger.update, () -> {
-        if (Vars.player != null && Vars.control.input.commandMode && Core.input.isTouched()) {
-            Vec2 pos = Core.input.mouseWorld();
-            if (Vars.control.input.selectedUnits != null) {
-                for (Unit unit : Vars.control.input.selectedUnits) {
-                    for (mindustry.entities.abilities.Ability ability : unit.abilities) {
-                        if (ability instanceof BlinkAbility blink) {
-                            blink.setDestination(pos.x, pos.y);
-                            unit.vel.setZero(); 
+        // 监听指挥模式点击
+        Events.run(EventType.Trigger.update, () -> {
+            // 👇 修复了 Vars 相关的报错
+            if (Vars.player != null && Vars.control != null && Vars.control.input.commandMode && Core.input.isTouched()) {
+                Vec2 pos = Core.input.mouseWorld();
+                if (Vars.control.input.selectedUnits != null) {
+                    for (Unit unit : Vars.control.input.selectedUnits) {
+                        for (mindustry.entities.abilities.Ability ability : unit.abilities) {
+                            if (ability instanceof BlinkAbility blink) {
+                                blink.setDestination(pos.x, pos.y);
+                                unit.vel.setZero(); 
+                            }
                         }
                     }
                 }
             }
-        }
-    });
+        });
 
-    // 渲染特效
-    Events.run(EventType.Trigger.draw, () -> {
-        for (int i = BlinkAbility.effects.size - 1; i >= 0; i--) {
-            BlinkEffect effect = BlinkAbility.effects.get(i);
-            effect.update();
-            if (effect.isDead()) {
-                BlinkAbility.effects.remove(i);
-            } else {
-                effect.draw();
-            }
-        }
-    });
+        // 渲染特效
+        Events.run(EventType.Trigger.draw, () -> {
+            for (int i = BlinkAbility.effects.size - 1; i >= 0; i--) {
+                BlinkEffect effect = BlinkAbility.effects.get(i);
+                effect.update();
+                if (effect.isDead()) {
+                    BlinkAbility.effects.remove(i);
+                } else {
+                    effect.draw();
                 }
-    
+            }
+        });
+    }
+
     @Override
     public void loadContent() {
         super.loadContent();
