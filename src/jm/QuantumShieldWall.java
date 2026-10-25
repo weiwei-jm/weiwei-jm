@@ -24,7 +24,7 @@ public class QuantumShieldWall extends Block {
     public float shieldRegenTime = 240f; 
     public float damageOnTouch = 10f;
     public float powerUse = 2f;
-    public float maxConnectDist = 10f * 8f; 
+    public float maxConnectDist = 10f * 8f; // 最大连接距离 10格 (80像素)
 
     public static final Color ancientColor = Color.valueOf("00e5ff");
     public static final Color ancientFront = ancientColor.cpy().lerp(Color.white, 0.45f);
@@ -140,37 +140,44 @@ public class QuantumShieldWall extends Block {
             Draw.z(Layer.effect);
             Draw.blend(Blending.additive);
             
-            for (int i = 0; i < 4; i++) {
-                Building other = nearby(i);
-                if (other instanceof QuantumShieldWallBuild wall) {
+            mindustry.gen.Groups.build.each(b -> {
+                if (b != this && b instanceof QuantumShieldWallBuild wall && b.team == this.team) {
                     if (wall.shield > 0 && wall.power.status >= 0.5f) {
                         float dst = Mathf.dst(x, y, wall.x, wall.y);
-                        if (dst <= maxConnectDist) {
- Draw.color(ancientColor, 0.3f);
-                            Lines.stroke(8f); 
-                            Lines.line(x, y, wall.x, wall.y);
-                            
-                            Draw.color(ancientFront);
-                            Lines.stroke(3f); 
-                            Lines.line(x, y, wall.x, wall.y);
+                        
+            // 👇 核心判定：必须在 10 格内，且 X 坐标相同或 Y 坐标相同（十字向）
+                        boolean sameX = Math.abs(this.x - wall.x) < 1f;
+                        boolean sameY = Math.abs(this.y - wall.y) < 1f;
+                        
+                        if (dst <= maxConnectDist && (sameX || sameY)) {
+                            // 只让 id 较小的塔负责画线，防止重复渲染
+                            if (this.id < wall.id) {
+                                Draw.color(ancientColor, 0.3f);
+                                Lines.stroke(8f); 
+                                Lines.line(x, y, wall.x, wall.y);
+                                
+                                Draw.color(ancientFront);
+                                Lines.stroke(3f); 
+                                Lines.line(x, y, wall.x, wall.y);
 
-                            Draw.color(ancientColor);
-                            Fill.circle(x, y, 6f);
-                            Fill.circle(wall.x, wall.y, 6f);
-                            Draw.color(Color.white);
-                            Fill.circle(x, y, 3f);
-                            Fill.circle(wall.x, wall.y, 3f);
+                                Draw.color(ancientColor);
+                                Fill.circle(x, y, 6f);
+                                Fill.circle(wall.x, wall.y, 6f);
+                                Draw.color(Color.white);
+                                Fill.circle(x, y, 3f);
+                                Fill.circle(wall.x, wall.y, 3f);
 
-                            if (Mathf.chance(0.15f)) {
-                                lightningFx.at(x, y, 0, ancientColor, new Vec2(wall.x, wall.y));
+                                if (Mathf.chance(0.15f)) {
+                                    lightningFx.at(x, y, 0, ancientColor, new Vec2(wall.x, wall.y));
+                                }
                             }
                         }
                     }
                 }
-            }
+            });
             
             Draw.blend(); 
             Draw.reset();
         }
     }
-                                }
+                                           }
