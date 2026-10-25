@@ -1,111 +1,115 @@
 package jm;
 
-import arc.Core;
-import arc.Events;
 import arc.graphics.Color;
-import arc.math.geom.Vec2;
-import mindustry.content.Planets;
-import mindustry.game.EventType;
-import mindustry.gen.Unit;
-import mindustry.mod.Mod;
-import mindustry.type.Planet;
-import mindustry.type.StatusEffect;
-import mindustry.graphics.g3d.MultiMesh;
-import mindustry.Vars;
+import arc.graphics.g2d.Draw;
+import arc.graphics.g2d.Lines;
+import arc.math.Mathf;
+import arc.util.Time;
+import mindustry.content.Fx;
+import mindustry.content.Items;
+import mindustry.gen.Building;
+import mindustry.graphics.Layer;
+import mindustry.graphics.Pal;
+import mindustry.type.Category;
+import mindustry.type.ItemStack;
+import mindustry.world.Block;
+import mindry.world.meta.BuildVisibility;
 
-public class JmMod extends Mod {
+public class QuantumShieldWall extends Block {
+    public float shieldCapacity = 2000f;
+    public float shieldRegenTime = 240f; 
+    public float damageOnTouch = 10f;
+    public float powerUse = 2f;
 
-    public static String ModName = "jm";
-    public static Planet myPlanet;
-    public static StatusEffect erosionStatus;
-    public static QuantumStormWeather quantumStorm;
-    public static QuantumShieldWall quantumShieldWall; 
-
-    public JmMod() {
-        super();
+    public QuantumShieldWall(String name) {
+        super(name);
+        update = true;
+        solid = true;
+        destructible = true;
+        hasPower = true;
+        canOverdrive = false;
+        consumePower(powerUse / 60f);
+        
+        size = 2;
+        health = 3200;
+        armor = 10f;
+        category = Category.defense;
+        
+        buildVisibility = BuildVisibility.sandboxOnly; 
+        
+        // 👇 删除了报错的 drawer = new DrawDefault();
+        
+        requirements(Category.defense, ItemStack.with(Items.titanium, 100, Items.lead, 80, Items.silicon, 60));
     }
 
-    @Override
-    public void init() {
-        // 1. 给原版单位加跃迁能力
-        Events.on(EventType.WorldLoadEvent.class, e -> {
-            mindustry.content.UnitTypes.dagger.abilities.add(new BlinkAbility());
-            mindustry.content.UnitTypes.flare.abilities.add(new BlinkAbility());
-        });
+    public class QuantumShieldWallBuild extends Building {
+        public float shield = shieldCapacity;
+        public float shieldTimer = 0f;
 
-        // 2. 指挥模式点击触发跃迁
-        Events.run(EventType.Trigger.update, () -> {
-            if (Vars.player != null && Vars.control != null && Vars.control.input.commandMode) {
-                if (Core.input.isTouched()) {
-                    if (Core.scene.hasMouse()) return;
-                    Vec2 pos = Core.input.mouseWorld();
-                    if (Vars.control.input.selectedUnits != null) {
-                        for (Unit unit : Vars.control.input.selectedUnits) {
-                            for (mindustry.entities.abilities.Ability ability : unit.abilities) {
-                                if (ability instanceof BlinkAbility blink) {
-                                    blink.trigger(unit, pos.x, pos.y);
-                                    if (unit.controller() instanceof mindustry.ai.types.CommandAI ai) {
-                                        ai.targetPos = null;
-                                    }
-                                }
+        @Override
+        public void update() {
+            super.update();
+
+            if (power == null || power.status < 0.5f) {
+                shield = 0f;
+                return;
+            }
+
+            if (shield < shieldCapacity) {
+                shieldTimer += Time.delta;
+                if (shieldTimer >= shieldRegenTime) {
+                    shield = Math.min(shield + shieldCapacity / 10f, shieldCapacity);
+                    shieldTimer = 0f;
+                }
+            }
+
+            if (shield > 0) {
+                mindustry.entities.Units.nearby(x, y, size * 8f, size * 8f, u -> {
+                    if (u.team != team && u.isGrounded()) {
+                        u.damage(damageOnTouch);
+                        float angle = Mathf.angle(x - u.x, y - u.y);
+                        u.vel.add(Mathf.cosDeg(angle) * 3f, Mathf.sinDeg(angle) * 3f);
+                        Fx.chainLightning.at(u.x, u.y, 0, Pal.accent);
+                    }
+                });
+            }
+        }
+
+        @Override
+        public void draw() {
+            super.draw(); 
+            if (power == null || power.status < 0.5f || shield <= 0) return;
+
+            Draw.z(Layer.effect);
+            for (int i = 0; i < 4; i++) {
+                Building other = nearby(i);
+                if (other instanceof QuantumShieldWallBuild wall) {
+                    if (wall.shield > 0 && wall.power.status >= 0.5f) {
+                        Draw.color(Color.valueOf("00e5ff"));
+                        Lines.stroke(2f);
+                        Lines.line(x, y, wall.x, wall.y);
+
+                        if (Mathf.chance(0.05f)) {
+                            float startX = x, startY = y;
+                            float endX = wall.x, endY = wall.y;
+                            
+                            Draw.color(Pal.accent);
+                            Lines.stroke(1.5f);
+                            float lastX = startX, lastY = startY;
+                            for (int j = 1; j <= 5; j++) {
+                                float t = j / 5f;
+                                float px = Mathf.lerp(startX, endX, t) + Mathf.range(8f);
+                                float py = Mathf.lerp(startY, endY, t) + Mathf.range(8f);
+                                Lines.line(lastX, lastY, px, py);
+                                lastX = px;
+                                lastY = py;
                             }
+                            Lines.line(lastX, lastY, endX, endY);
                         }
                     }
                 }
             }
-        });
-
-        // 3. 渲染跃迁特效
-        Events.run(EventType.Trigger.draw, () -> {
-            for (int i = BlinkAbility.effects.size - 1; i >= 0; i--) {
-                BlinkEffect effect = BlinkAbility.effects.get(i);
-                effect.update();
-                if (effect.isDead()) {
-                    BlinkAbility.effects.remove(i);
-                } else {
-                    effect.draw();
-                }
-            }
-        });
-    }
-
-    @Override
-    public void loadContent() {
-        super.loadContent();
-
-        // 注册量子风暴状态和天气
-        erosionStatus = new QuantumErosionStatus();
-        quantumStorm = new QuantumStormWeather("quantum-storm", erosionStatus);
-        quantumStorm.localizedName = "量子风暴";
-
-        // 注册环界星球
-        myPlanet = new Planet("ring-world", Planets.sun, 1f, 2) {{
-            localizedName = "[sky]环界"; 
-            accessible = true;
-            alwaysUnlocked = true;
-            visible = true;
-            
-            meshLoader = () -> new JmPlanet(this);
-            
-            cloudMeshLoader = () -> new MultiMesh(
-                new DysonRingMesh(this, 1.5f, 0.1f, 729, Color.valueOf("555555"), Color.valueOf("555555"), false),
-                new DysonRingMesh(this, 1.8f, 0.1f, 2941, Color.valueOf("555555"), Color.valueOf("555555"), false),
-                new DysonRingMesh(this, 2.1f, 0.1f, 3834, Color.valueOf("555555"), Color.valueOf("555555"), false)
-            );
-            
-            atmosphereColor = Color.valueOf("00e5ff");
-            atmosphereRadIn = 0.05f;
-            atmosphereRadOut = 0.25f;
-            iconColor = Color.valueOf("00e5ff");
-            
-            ruleSetter = r -> {
-                r.waves = true;
-                r.waveSpacing = 60f * 60f; 
-            };
-        }};
-
-        // 注册量子护盾防御塔（强行加入游戏内容库）
-        quantumShieldWall = new QuantumShieldWall("quantum-shield-wall");
-        Vars.content.blocks().add(quantumShieldWall);
+            Draw.reset();
+        }
     }
 }
