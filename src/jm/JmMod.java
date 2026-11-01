@@ -30,16 +30,15 @@ public class JmMod extends Mod {
         Events.on(EventType.WorldLoadEvent.class, e -> {
             var dagger = mindustry.content.UnitTypes.dagger;
             
-            // 直接替换 AI
-            dagger.controller = () -> new JmExecutorAI();
+            // 👇 强转类型，解决 lambda 推断报错
+            dagger.controller = (mindustry.entities.units.UnitController) () -> new JmExecutorAI();
             
-            // 👇 最标准的添加武器写法
             JmExecutorWeapon w = new JmExecutorWeapon();
             w.mirror = false;
             w.x = 0; 
             w.y = 0;
             w.reload = 600f;
-            w.range = 400f;
+            w.range = 400f; // 👈 确保这里用的是原版字段名
             
             dagger.weapons.add(w);
         });
@@ -114,4 +113,4 @@ public class JmMod extends Mod {
         quantumShieldWall = new QuantumShieldWall("quantum-shield-wall");
         Vars.content.blocks().add(quantumShieldWall);
     }
-                                  }
+}
