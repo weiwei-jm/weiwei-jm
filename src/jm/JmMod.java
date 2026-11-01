@@ -11,6 +11,7 @@ import mindustry.mod.Mod;
 import mindustry.type.Planet;
 import mindustry.type.StatusEffect;
 import mindustry.graphics.g3d.MultiMesh;
+import arc.func.Prov;
 import mindustry.Vars;
 
 public class JmMod extends Mod {
@@ -30,15 +31,16 @@ public class JmMod extends Mod {
         Events.on(EventType.WorldLoadEvent.class, e -> {
             var dagger = mindustry.content.UnitTypes.dagger;
             
-            // 👇 强转类型，解决 lambda 推断报错
-            dagger.controller = (mindustry.entities.units.UnitController) () -> new JmExecutorAI();
+            // 用原版安全的方式替换 AI
+            dagger.controller = (Prov<mindustry.entities.units.UnitController>) () -> new JmExecutorAI();
             
+            // 初始化武器
             JmExecutorWeapon w = new JmExecutorWeapon();
             w.mirror = false;
             w.x = 0; 
             w.y = 0;
             w.reload = 600f;
-            w.range = 400f; // 👈 确保这里用的是原版字段名
+            // 删除了 w.range，因为原版武器没有这个字段
             
             dagger.weapons.add(w);
         });
