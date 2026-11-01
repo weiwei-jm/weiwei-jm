@@ -140,4 +140,78 @@ public class QuantumShieldWall extends Block {
                                 
                                 if (dst <= maxConnectDist && (sameX || sameY)) {
                                     // 修复：替代不存在的 Mathf.dstLine，使用三角函数计算点到线段距离
-                                    float lineDst = Math
+                                    float lineDst = Math.abs((u.x - x) * (wall.y - y) - (u.y - y) * (wall.x - x)) / dst;
+                                    
+                                    if (lineDst < 16f) {
+                                        u.damageContinuous(damageOnTouch); 
+                                        
+                                        float angle = Mathf.angle(u.x - x, u.y - y);
+                                        u.vel.add(Mathf.cosDeg(angle) * 2.5f, Mathf.sinDeg(angle) * 2.5f);
+                                        u.vel.scl(0.95f); 
+                                        
+                                        if (Mathf.chance(0.2f)) {
+                                            Fx.chainLightning.at(u.x, u.y, 0, ancientColor);
+                                        }
+                                        
+                                        if (Mathf.chance(0.1f)) {
+                                            hitsTaken++;
+                                            if (hitsTaken >= maxHits) {
+                                                isCoolingDown = true;
+                                                shieldTimer = 0f;
+                                                Fx.blast.at(x, y, size * 8f);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        @Override
+        public void draw() {
+            if (power == null || power.status < 0.5f || isCoolingDown) return;
+
+            Draw.z(Layer.effect);
+            Draw.blend(Blending.additive);
+            
+            mindustry.gen.Groups.build.each(b -> {
+                if (b != this && b instanceof QuantumShieldWallBuild wall && b.team == this.team) {
+                    if (!wall.isCoolingDown && wall.power.status >= 0.5f) {
+                        float dst = Mathf.dst(x, y, wall.x, wall.y);
+                        boolean sameX = Math.abs(this.x - wall.x) < 1f;
+                        boolean sameY = Math.abs(this.y - wall.y) < 1f;
+                        
+                        if (dst <= maxConnectDist && (sameX || sameY)) {
+                            if (this.id < wall.id) {
+                                Draw.color(ancientColor, 0.3f);
+                                Lines.stroke(8f); 
+                                Lines.line(x, y, wall.x, wall.y);
+                                
+                                Draw.color(ancientFront);
+                                Lines.stroke(3f); 
+                                Lines.line(x, y, wall.x, wall.y);
+
+                                Draw.color(ancientColor);
+                                Fill.circle(x, y, 6f);
+                                Fill.circle(wall.x, wall.y, 6f);
+                                Draw.color(Color.white);
+                                Fill.circle(x, y, 3f);
+                                Fill.circle(wall.x, wall.y, 3f);
+
+                                if (Mathf.chance(0.15f) && !mindustry.Vars.state.isPaused()) {
+                                    lightningFx.at(x, y, 0, ancientColor, new Vec2(wall.x, wall.y));
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            Draw.blend(); 
+            Draw.reset();
+        }
+    }
+                                }
