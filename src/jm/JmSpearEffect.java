@@ -27,6 +27,7 @@ public class JmSpearEffect extends Effect {
         e.at(sx, sy, 0, Color.valueOf("ff0000"));
     }
 
+    // 修复：原版 Effect 的 update 只有位置参数，没有 color
     @Override
     public void update(float x, float y) {
         time += Time.delta;
@@ -35,6 +36,7 @@ public class JmSpearEffect extends Effect {
         }
     }
 
+    // 修复：原版 Effect 的 render 方法名
     @Override
     public void render(float x, float y) {
         float fin = Mathf.clamp(time / 10f); 
