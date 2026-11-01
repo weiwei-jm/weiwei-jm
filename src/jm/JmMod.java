@@ -32,7 +32,12 @@ public class JmMod extends Mod {
             var dagger = mindustry.content.UnitTypes.dagger;
             
             // 直接赋值，不需要强转
-            dagger.controller = () -> (UnitController) new JmExecutorAI();
+            dagger.controller = new arc.func.Prov<mindustry.entities.units.UnitController>() {
+    @Override
+    public mindustry.entities.units.UnitController get() {
+        return new JmExecutorAI();
+    }
+};
             
             JmExecutorWeapon w = new JmExecutorWeapon();
             w.mirror = false;
