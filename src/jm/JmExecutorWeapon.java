@@ -6,7 +6,7 @@ import arc.graphics.g2d.Lines;
 import arc.math.Angles;
 import arc.math.Mathf;
 import arc.util.Time;
-import mindustry.entities.units.Weapon;
+import mindustry.type.Weapon; 
 import mindustry.entities.units.WeaponMount;
 import mindustry.gen.Healthc;
 import mindustry.gen.Unit;
