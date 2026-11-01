@@ -11,7 +11,6 @@ import mindustry.mod.Mod;
 import mindustry.type.Planet;
 import mindustry.type.StatusEffect;
 import mindustry.graphics.g3d.MultiMesh;
-import mindustry.entities.units.UnitController; // 加上这个导入
 import mindustry.Vars;
 
 public class JmMod extends Mod {
@@ -31,14 +30,10 @@ public class JmMod extends Mod {
         Events.on(EventType.WorldLoadEvent.class, e -> {
             var dagger = mindustry.content.UnitTypes.dagger;
             
-            // 直接赋值，不需要强转
-            dagger.controller = new arc.func.Prov<mindustry.entities.units.UnitController>() {
-    @Override
-    public mindustry.entities.units.UnitController get() {
-        return new JmExecutorAI();
-    }
-};
+            // 👇 就是这里！完美加上了 u ->，解决了所有的类型推断报错
+            dagger.controller = u -> new JmExecutorAI();
             
+            // 初始化武器
             JmExecutorWeapon w = new JmExecutorWeapon();
             w.mirror = false;
             w.x = 0; 
