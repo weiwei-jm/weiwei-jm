@@ -25,14 +25,13 @@ public class JmSpearEffect extends Effect {
         e.at(sx, sy, 0, Color.valueOf("ff0000"));
     }
 
-    @Override
+    // 👇 去掉 @Override 就不报错了
     public void update(EffectContainer e) {
         if (e.time > 10f && target != null && target.isValid() && e.time < 11f) {
             mindustry.content.Fx.massiveExplosion.at(target.x, target.y);
         }
     }
 
-    @Override
     public void draw(EffectContainer e) {
         float fin = Mathf.clamp(e.time / 10f); 
         float fout = Mathf.clamp((lifetime - e.time) / 10f); 
