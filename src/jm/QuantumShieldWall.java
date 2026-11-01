@@ -5,6 +5,7 @@ import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Fill;
 import arc.graphics.g2d.Lines;
+import arc.math.Angles;
 import arc.math.Mathf;
 import arc.math.Rand;
 import arc.math.geom.Position;
@@ -21,17 +22,18 @@ import mindustry.world.Block;
 import mindustry.world.meta.BuildVisibility;
 
 public class QuantumShieldWall extends Block {
-    public float shieldCapacity = 2000f;
-    public float shieldRegenTime = 240f; 
-    public float damageOnTouch = 100f; // 碰一下极其致命
+    public int maxHits = 10; 
+    public float shieldRegenTime = 600f; 
+    public float damageOnTouch = 100f; 
     public float powerUse = 2f;
     public float maxConnectDist = 10f * 8f; 
 
     public static final Color ancientColor = Color.valueOf("00e5ff");
     public static final Color ancientFront = ancientColor.cpy().lerp(Color.white, 0.45f);
 
-    public static final Effect lightningFx = new Effect(20f, 500f, e -> {
-        if (!(e.data instanceof Position)) return;
+    public static final Effect lightningFx = new Effect(8f, 500f, e -> {
+        if (!(e.data instanceof Position) || mindustry.Vars.state.isPaused()) return;
+
         Position target = e.data();
         float tx = target.getX(), ty = target.getY();
         float dst = Mathf.dst(e.x, e.y, tx, ty);
@@ -53,7 +55,7 @@ public class QuantumShieldWall extends Block {
         Rand rand = new Rand();
         rand.setSeed(e.id);
         
-        float fin = Mathf.curve(e.fin(), 0, 0.5f); 
+        float fin = Mathf.curve(e.fin(), 0, 0.8f); 
         int i;
         float nx = e.x, ny = e.y;
         
@@ -103,100 +105,39 @@ public class QuantumShieldWall extends Block {
     }
 
     public class QuantumShieldWallBuild extends Building {
-        public float shield = shieldCapacity;
+        public int hitsTaken = 0;
         public float shieldTimer = 0f;
+        public boolean isCoolingDown = false;
 
         @Override
         public void update() {
             super.update();
 
             if (power == null || power.status < 0.5f) {
-                shield = 0f;
+                hitsTaken = maxHits;
+                isCoolingDown = false;
                 return;
             }
 
-            if (shield < shieldCapacity) {
+            if (isCoolingDown) {
                 shieldTimer += Time.delta;
                 if (shieldTimer >= shieldRegenTime) {
-                    shield = Math.min(shield + shieldCapacity / 10f, shieldCapacity);
+                    isCoolingDown = false;
+                    hitsTaken = 0;
                     shieldTimer = 0f;
                 }
             }
 
-            if (shield > 0) {
+            if (!isCoolingDown) {
                 mindustry.entities.Units.nearby(x, y, maxConnectDist, maxConnectDist, u -> {
-                    if (u.team != team && u.isGrounded()) {
-                        // 检查敌人是不是刚好在我们的十字连线上
+                    if (u.team != team) {
                         for (int i = 0; i < 4; i++) {
                             Building other = nearby(i);
-                            if (other instanceof QuantumShieldWallBuild wall && wall.shield > 0) {
+                            if (other instanceof QuantumShieldWallBuild wall && !wall.isCoolingDown) {
                                 float dst = Mathf.dst(x, y, wall.x, wall.y);
                                 boolean sameX = Math.abs(this.x - wall.x) < 1f;
                                 boolean sameY = Math.abs(this.y - wall.y) < 1f;
                                 
                                 if (dst <= maxConnectDist && (sameX || sameY)) {
-                                    // 计算敌人到线段的距离
-                                    float lineDst = Mathf.dstLine(u.x, u.y, x, y, wall.x, wall.y);
-                                    
-                                    // 如果敌人撞在了光束上（距离线小于 12 像素）
-                                    if (lineDst < 12f) {
-                                        u.damageContinuous(damageOnTouch); // 持续受到高额伤害
-                                        
-                                        // 纯视觉效果，不影响移动
-                                        if (Mathf.chance(0.2f)) {
-                                            Fx.chainLightning.at(u.x, u.y, 0, ancientColor);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-        }
-
-        @Override
-        public void draw() {
-            if (power == null || power.status < 0.5f || shield <= 0) return;
-
-            Draw.z(Layer.effect);
-            Draw.blend(Blending.additive);
-            
-            mindustry.gen.Groups.build.each(b -> {
-                if (b != this && b instanceof QuantumShieldWallBuild wall && b.team == this.team) {
-                    if (wall.shield > 0 && wall.power.status >= 0.5f) {
-                        float dst = Mathf.dst(x, y, wall.x, wall.y);
-                        boolean sameX = Math.abs(this.x - wall.x) < 1f;
-                        boolean sameY = Math.abs(this.y - wall.y) < 1f;
-                        
-                        if (dst <= maxConnectDist && (sameX || sameY)) {
-                            if (this.id < wall.id) {
-                                Draw.color(ancientColor, 0.3f);
-                                Lines.stroke(8f); 
-                                Lines.line(x, y, wall.x, wall.y);
-                                
-                                Draw.color(ancientFront);
-                                Lines.stroke(3f); 
-                                Lines.line(x, y, wall.x, wall.y);
-
-                                Draw.color(ancientColor);
-                                Fill.circle(x, y, 6f);
-                                Fill.circle(wall.x, wall.y, 6f);
-                                Draw.color(Color.white);
-                                Fill.circle(x, y, 3f);
-                                Fill.circle(wall.x, wall.y, 3f);
-
-                                if (Mathf.chance(0.15f)) {
-                                    lightningFx.at(x, y, 0, ancientColor, new Vec2(wall.x, wall.y));
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-            
-            Draw.blend(); 
-            Draw.reset();
-        }
-    }
-}
+                                    // 修复：替代不存在的 Mathf.dstLine，使用三角函数计算点到线段距离
+                                    float lineDst = Math
