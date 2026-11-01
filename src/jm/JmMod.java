@@ -11,6 +11,7 @@ import mindustry.mod.Mod;
 import mindustry.type.Planet;
 import mindustry.type.StatusEffect;
 import mindustry.graphics.g3d.MultiMesh;
+import mindustry.type.Weapon; 
 import mindustry.Vars;
 
 public class JmMod extends Mod {
@@ -27,23 +28,25 @@ public class JmMod extends Mod {
 
     @Override
     public void init() {
-        // 1. 进游戏给匕首注入处决能力
         Events.on(EventType.WorldLoadEvent.class, e -> {
-            // 替换掉原本的 AI 控制器
-            mindustry.content.UnitTypes.dagger.controller = () -> new JmExecutorAI();
+            var dagger = mindustry.content.UnitTypes.dagger;
+            dagger.controller = () -> new JmExecutorAI();
             
-            // 把自定义的处决武器塞给它
-            // 注意：我们添加一个隐藏的处决武器，不占用它原本的炮管
-            mindustry.content.UnitTypes.dagger.weapons.add(new JmExecutorWeapon() {{
-                mirror = false;
-                x = 0; 
-                y = 0;
-                reload = 600f;
-                range = 400f;
-            }});
+            // 数组扩容
+            Weapon[] newWeapons = new Weapon[dagger.weapons.length + 1];
+            System.arraycopy(dagger.weapons, 0, newWeapons, 0, dagger.weapons.length);
+            
+            JmExecutorWeapon w = new JmExecutorWeapon();
+            w.mirror = false;
+            w.x = 0; 
+            w.y = 0;
+            w.reload = 600f;
+            w.range = 400f;
+            
+            newWeapons[dagger.weapons.length] = w;
+            dagger.weapons = newWeapons;
         });
 
-        // 2. 指挥模式点击触发跃迁
         Events.run(EventType.Trigger.update, () -> {
             if (Vars.player != null && Vars.control != null && Vars.control.input.commandMode) {
                 if (Core.input.isTouched()) {
@@ -65,7 +68,6 @@ public class JmMod extends Mod {
             }
         });
 
-        // 3. 渲染跃迁特效
         Events.run(EventType.Trigger.draw, () -> {
             for (int i = BlinkAbility.effects.size - 1; i >= 0; i--) {
                 BlinkEffect effect = BlinkAbility.effects.get(i);
