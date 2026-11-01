@@ -12,8 +12,9 @@ import mindustry.gen.Unit;
 import mindustry.graphics.Layer;
 
 public class JmSpearEffect extends Effect {
-    public float sx, sy, tx, ty, length, time;
+    public float sx, sy, tx, ty, length;
     public Unit target;
+    public float time;
 
     public static void create(Unit unit, float sx, float sy, float tx, float ty) {
         JmSpearEffect e = new JmSpearEffect();
@@ -21,25 +22,21 @@ public class JmSpearEffect extends Effect {
         e.tx = tx; e.ty = ty;
         e.target = unit;
         e.length = Mathf.dst(sx, sy, tx, ty);
-        e.time = 0f;
         e.lifetime = 30f; 
         e.layer = Layer.effect + 1;
         e.at(sx, sy, 0, Color.valueOf("ff0000"));
     }
 
     @Override
-    public void update(float x, float y, float rotation, Color color) {
-        super.update(x, y, rotation, color);
+    public void update(float x, float y) {
         time += Time.delta;
-        
         if (time > 10f && target != null && target.isValid() && time < 11f) {
             mindustry.content.Fx.massiveExplosion.at(target.x, target.y);
         }
     }
 
-    // 原版 Effect 的渲染方法是 render，不是 draw
     @Override
-    public void render(float x, float y, float rotation, Color color) {
+    public void render(float x, float y) {
         float fin = Mathf.clamp(time / 10f); 
         float fout = Mathf.clamp((lifetime - time) / 10f); 
         float currentLength = length * fin;
@@ -49,7 +46,7 @@ public class JmSpearEffect extends Effect {
         Draw.color(Color.valueOf("ff0000"));
         Draw.alpha(fout);
         
-        float ang = Angles.angle(sx, sy, tx, ty); // 修复了参数
+        float ang = Angles.angle(sx, sy, tx, ty);
         Lines.stroke(4f * fout);
         Lines.line(sx, sy, sx + Angles.trnsx(ang, currentLength), sy + Angles.trnsy(ang, currentLength));
         
