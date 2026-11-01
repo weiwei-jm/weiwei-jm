@@ -14,7 +14,6 @@ import mindustry.graphics.Layer;
 public class JmSpearEffect extends Effect {
     public float sx, sy, tx, ty, length;
     public Unit target;
-    public float time;
 
     public static void create(Unit unit, float sx, float sy, float tx, float ty) {
         JmSpearEffect e = new JmSpearEffect();
@@ -27,18 +26,18 @@ public class JmSpearEffect extends Effect {
         e.at(sx, sy, 0, Color.valueOf("ff0000"));
     }
 
+    // 👇 原版 Effect 正确的重写方法
     @Override
-    public void update(float x, float y) {
-        time += Time.delta;
-        if (time > 10f && target != null && target.isValid() && time < 11f) {
+    public void update(EffectContainer e) {
+        if (e.time > 10f && target != null && target.isValid() && e.time < 11f) {
             mindustry.content.Fx.massiveExplosion.at(target.x, target.y);
         }
     }
 
     @Override
-    public void render(float x, float y) {
-        float fin = Mathf.clamp(time / 10f); 
-        float fout = Mathf.clamp((lifetime - time) / 10f); 
+    public void draw(EffectContainer e) {
+        float fin = Mathf.clamp(e.time / 10f); 
+        float fout = Mathf.clamp((lifetime - e.time) / 10f); 
         float currentLength = length * fin;
         
         if (currentLength <= 0) return;
