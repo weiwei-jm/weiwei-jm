@@ -11,7 +11,6 @@ import mindustry.mod.Mod;
 import mindustry.type.Planet;
 import mindustry.type.StatusEffect;
 import mindustry.graphics.g3d.MultiMesh;
-import mindustry.type.Weapon; 
 import mindustry.Vars;
 
 public class JmMod extends Mod {
@@ -30,12 +29,11 @@ public class JmMod extends Mod {
     public void init() {
         Events.on(EventType.WorldLoadEvent.class, e -> {
             var dagger = mindustry.content.UnitTypes.dagger;
+            
+            // 直接替换 AI
             dagger.controller = () -> new JmExecutorAI();
             
-            // 数组扩容
-            Weapon[] newWeapons = new Weapon[dagger.weapons.length + 1];
-            System.arraycopy(dagger.weapons, 0, newWeapons, 0, dagger.weapons.length);
-            
+            // 👇 最标准的添加武器写法
             JmExecutorWeapon w = new JmExecutorWeapon();
             w.mirror = false;
             w.x = 0; 
@@ -43,8 +41,7 @@ public class JmMod extends Mod {
             w.reload = 600f;
             w.range = 400f;
             
-            newWeapons[dagger.weapons.length] = w;
-            dagger.weapons = newWeapons;
+            dagger.weapons.add(w);
         });
 
         Events.run(EventType.Trigger.update, () -> {
@@ -117,4 +114,4 @@ public class JmMod extends Mod {
         quantumShieldWall = new QuantumShieldWall("quantum-shield-wall");
         Vars.content.blocks().add(quantumShieldWall);
     }
-}
+                                  }
