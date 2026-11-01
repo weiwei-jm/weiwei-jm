@@ -1,15 +1,16 @@
 package jm;
 
 import arc.graphics.Color;
+import arc.graphics.g2d.Draw;
+import arc.graphics.g2d.Lines;
 import arc.math.Angles;
 import arc.math.Mathf;
 import arc.util.Time;
 import mindustry.entities.units.Weapon;
 import mindustry.entities.units.WeaponMount;
+import mindustry.gen.Healthc;
 import mindustry.gen.Unit;
-import mindustry.graphics.Draw;
 import mindustry.graphics.Layer;
-import mindustry.graphics.Lines;
 
 public class JmExecutorWeapon extends Weapon {
     public JmExecutorWeapon() {
@@ -30,17 +31,18 @@ public class JmExecutorWeapon extends Weapon {
 
             if (m.stageTime <= 0) {
                 switch (m.stage) {
-                    case 0 -> m.stageTime = 60f; // 准备法阵
+                    case 0 -> m.stageTime = 60f; 
                     case 1 -> {
-                        // 👇 执行万剑归宗处决
-                        if (mount.target != null && mount.target.isValid()) {
-                            for (int i = 0; i < 8; i++) {
-                                float ang = i * 45f + Mathf.random(-20f, 20f);
-                                float sx = unit.x + Angles.trnsx(ang, 60f);
-                                float sy = unit.y + Angles.trnsy(ang, 60f);
-                                JmSpearEffect.create((Unit) mount.target, sx, sy, mount.target.x(), mount.target.y());
+                        if (mount.target != null) {
+                            if (mount.target instanceof Healthc h && h.isValid()) {
+                                for (int i = 0; i < 8; i++) {
+                                    float ang = i * 45f + Mathf.random(-20f, 20f);
+                                    float sx = unit.x + Angles.trnsx(ang, 60f);
+                                    float sy = unit.y + Angles.trnsy(ang, 60f);
+                                    JmSpearEffect.create((Unit) mount.target, sx, sy, mount.target.x(), mount.target.y());
+                                }
+                                h.damage(9999999f);
                             }
-                            mount.target.damage(9999999f); // 秒杀
                         }
                         m.stageTime = 60f;
                     }
@@ -53,23 +55,20 @@ public class JmExecutorWeapon extends Weapon {
                 m.stage++;
             }
         } else {
-            // 👇 索敌逻辑：清杂兵 vs 处决高血量
-            if (mount.target != null && mount.target.isValid() && unit.within(mount.target, unit.type.maxRange)) {
-                // 如果目标血量极高（比如超过 2000），触发万剑归宗动画
-                if (mount.target instanceof mindustry.gen.Healthc h && h.health() > 2000f) {
+            if (mount.target != null && mount.target instanceof Healthc h && h.isValid() && unit.within(mount.target, unit.type.maxRange)) {
+                if (h.health() > 2000f) {
                     m.active = true;
                     m.stage = 0;
                     m.stageTime = 60f;
                 } else {
-                    // 如果是杂兵，直接瞬间秒杀
-                    mount.target.damage(9999999f);
-                    mindustry.content.Fx.massiveExplosion.at(mount.target.x(), mount.target.y());
+                    h.damage(9999999f);
+                    mindustry.content.Fx.massiveExplosion.at(h.x(), h.y());
                 }
             }
         }
-}
+    }
 
-@Override
+    @Override
     public void draw(Unit unit, WeaponMount mount) {
         if (!(mount instanceof JmExecutorMount m)) return;
         
