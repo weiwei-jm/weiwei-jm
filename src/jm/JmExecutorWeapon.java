@@ -1,0 +1,96 @@
+package jm;
+
+import arc.graphics.Color;
+import arc.math.Angles;
+import arc.math.Mathf;
+import arc.util.Time;
+import mindustry.entities.units.Weapon;
+import mindustry.entities.units.WeaponMount;
+import mindustry.gen.Unit;
+import mindustry.graphics.Draw;
+import mindustry.graphics.Layer;
+import mindustry.graphics.Lines;
+
+public class JmExecutorWeapon extends Weapon {
+    public JmExecutorWeapon() {
+        mirror = false;
+        x = y = 0f;
+        noAttack = true;
+        controllable = false;
+        autoTarget = false;
+    }
+
+    @Override
+    public void update(Unit unit, WeaponMount mount) {
+        if (!(mount instanceof JmExecutorMount m)) return;
+
+        if (m.active) {
+            m.time += Time.delta;
+            m.stageTime -= Time.delta;
+
+            if (m.stageTime <= 0) {
+                switch (m.stage) {
+                    case 0 -> m.stageTime = 60f; // 准备法阵
+                    case 1 -> {
+                        // 👇 执行万剑归宗处决
+                        if (mount.target != null && mount.target.isValid()) {
+                            for (int i = 0; i < 8; i++) {
+                                float ang = i * 45f + Mathf.random(-20f, 20f);
+                                float sx = unit.x + Angles.trnsx(ang, 60f);
+                                float sy = unit.y + Angles.trnsy(ang, 60f);
+                                JmSpearEffect.create((Unit) mount.target, sx, sy, mount.target.x(), mount.target.y());
+                            }
+                            mount.target.damage(9999999f); // 秒杀
+                        }
+                        m.stageTime = 60f;
+                    }
+                    case 2 -> {
+                        m.active = false;
+                        m.stage = 0;
+                        m.stageTime = 0f;
+                    }
+                }
+                m.stage++;
+            }
+        } else {
+            // 👇 索敌逻辑：清杂兵 vs 处决高血量
+            if (mount.target != null && mount.target.isValid() && unit.within(mount.target, unit.type.maxRange)) {
+                // 如果目标血量极高（比如超过 2000），触发万剑归宗动画
+                if (mount.target instanceof mindustry.gen.Healthc h && h.health() > 2000f) {
+                    m.active = true;
+                    m.stage = 0;
+                    m.stageTime = 60f;
+                } else {
+                    // 如果是杂兵，直接瞬间秒杀
+                    mount.target.damage(9999999f);
+                    mindustry.content.Fx.massiveExplosion.at(mount.target.x(), mount.target.y());
+                }
+            }
+        }
+}
+
+@Override
+    public void draw(Unit unit, WeaponMount mount) {
+        if (!(mount instanceof JmExecutorMount m)) return;
+        
+        if (m.active) {
+            Draw.z(Layer.effect + 1);
+            Draw.color(Color.valueOf("ff0000"));
+            Lines.stroke(3f);
+            Lines.circle(unit.x, unit.y, 150f + m.time / 2f);
+            Lines.circle(unit.x, unit.y, 100f - m.time / 4f);
+            Lines.poly(unit.x, unit.y, 6, 120f, m.time);
+            Draw.reset();
+        }
+    }
+
+    public static class JmExecutorMount extends WeaponMount {
+        public float time, stageTime;
+        public int stage;
+        public boolean active;
+
+        JmExecutorMount(Weapon w) {
+            super(w);
+        }
+    }
+}
