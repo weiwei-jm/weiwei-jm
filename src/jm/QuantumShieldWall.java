@@ -104,73 +104,72 @@ public class QuantumShieldWall extends Block {
         requirements(Category.defense, ItemStack.with(Items.titanium, 100, Items.lead, 80, Items.silicon, 60));
     }
 
-    public class QuantumShieldWallBuild extends Building {
-        public int hitsTaken = 0;
-        public float shieldTimer = 0f;
-        public boolean isCoolingDown = false;
+public class QuantumShieldWallBuild extends Building {
+    public int hitsTaken = 0;
+    public float shieldTimer = 0f;
+    public boolean isCoolingDown = false;
 
-        @Override
-        public void update() {
-            super.update();
+    @Override
+    public void update() {
+        super.update();
 
-            if (power == null || power.status < 0.5f) {
-                hitsTaken = maxHits;
+        if (power == null || power.status < 0.5f) {
+            hitsTaken = maxHits;
+            isCoolingDown = false;
+            return;
+        }
+
+        if (isCoolingDown) {
+            shieldTimer += Time.delta;
+            if (shieldTimer >= shieldRegenTime) {
                 isCoolingDown = false;
-                return;
+                hitsTaken = 0;
+                shieldTimer = 0f;
             }
+        }
 
-            if (isCoolingDown) {
-                shieldTimer += Time.delta;
-                if (shieldTimer >= shieldRegenTime) {
-                    isCoolingDown = false;
-                    hitsTaken = 0;
-                    shieldTimer = 0f;
-                }
-            }
-
-            if (!isCoolingDown) {
-                mindustry.entities.Units.nearby(x, y, maxConnectDist, maxConnectDist, u -> {
-                    if (u.team != team) {
-                        for (int i = 0; i < 4; i++) {
-                            Building other = nearby(i);
-                            if (other instanceof QuantumShieldWallBuild wall && !wall.isCoolingDown) {
-                                float dst = Mathf.dst(x, y, wall.x, wall.y);
-                                boolean sameX = Math.abs(this.x - wall.x) < 1f;
-                                boolean sameY = Math.abs(this.y - wall.y) < 1f;
+        if (!isCoolingDown) {
+            mindustry.entities.Units.nearby(x, y, maxConnectDist, maxConnectDist, u -> {
+                if (u.team != team) {
+                    for (int i = 0; i < 4; i++) {
+                        Building other = nearby(i);
+                        if (other instanceof QuantumShieldWallBuild wall && !wall.isCoolingDown) {
+                            float dst = Mathf.dst(x, y, wall.x, wall.y);
+                            boolean sameX = Math.abs(this.x - wall.x) < 1f;
+                            boolean sameY = Math.abs(this.y - wall.y) < 1f;
+                            
+                            if (dst <= maxConnectDist && (sameX || sameY)) {
+                                float lineDst = Math.abs((u.x - x) * (wall.y - y) - (u.y - y) * (wall.x - x)) / dst;
                                 
-                                if (dst <= maxConnectDist && (sameX || sameY)) {
-                                    // 修复：替代不存在的 Mathf.dstLine，使用三角函数计算点到线段距离
-                                    float lineDst = Math.abs((u.x - x) * (wall.y - y) - (u.y - y) * (wall.x - x)) / dst;
+                                if (lineDst < 16f) {
+                                    u.damageContinuous(damageOnTouch); 
                                     
-                                    if (lineDst < 16f) {
-                                        u.damageContinuous(damageOnTouch); 
-                                        
-                                        float angle = Mathf.angle(u.x - x, u.y - y);
-                                        u.vel.add(Mathf.cosDeg(angle) * 2.5f, Mathf.sinDeg(angle) * 2.5f);
-                                        u.vel.scl(0.95f); 
-                                        
-                                        if (Mathf.chance(0.2f)) {
-                                            Fx.chainLightning.at(u.x, u.y, 0, ancientColor);
-                                        }
-                                        
-                                        if (Mathf.chance(0.1f)) {
-                                            hitsTaken++;
-                                            if (hitsTaken >= maxHits) {
-                                                isCoolingDown = true;
-                                                shieldTimer = 0f;
-                                                Fx.blast.at(x, y, size * 8f);
-                                            }
+                                    float angle = Mathf.angle(u.x - x, u.y - y);
+                                    u.vel.add(Mathf.cosDeg(angle) * 2.5f, Mathf.sinDeg(angle) * 2.5f);
+                                    u.vel.scl(0.95f); 
+                                    
+                                    if (Mathf.chance(0.2f)) {
+                                        Fx.chainLightning.at(u.x, u.y, 0, ancientColor);
+                                    }
+                                    
+                                    if (Mathf.chance(0.1f)) {
+                                        hitsTaken++;
+                                        if (hitsTaken >= maxHits) {
+                                            isCoolingDown = true;
+                                            shieldTimer = 0f;
+                                            Fx.massiveExplosion.at(x, y);
                                         }
                                     }
                                 }
                             }
                         }
                     }
-                });
-            }
+                }
+            });
         }
+    }
 
-        @Override
+    @Override
         public void draw() {
             if (power == null || power.status < 0.5f || isCoolingDown) return;
 
@@ -214,4 +213,4 @@ public class QuantumShieldWall extends Block {
             Draw.reset();
         }
     }
-                                }
+}
