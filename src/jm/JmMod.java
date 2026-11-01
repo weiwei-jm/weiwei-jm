@@ -19,7 +19,7 @@ public class JmMod extends Mod {
     public static Planet myPlanet;
     public static StatusEffect erosionStatus;
     public static QuantumStormWeather quantumStorm;
-    public static QuantumShieldWall quantumShieldWall;
+    public static QuantumShieldWall quantumShieldWall; 
 
     public JmMod() {
         super();
@@ -27,10 +27,20 @@ public class JmMod extends Mod {
 
     @Override
     public void init() {
-        // 1. 给原版单位加能力测试
+        // 1. 进游戏给匕首注入处决能力
         Events.on(EventType.WorldLoadEvent.class, e -> {
-            mindustry.content.UnitTypes.dagger.abilities.add(new BlinkAbility());
-            mindustry.content.UnitTypes.flare.abilities.add(new BlinkAbility());
+            // 替换掉原本的 AI 控制器
+            mindustry.content.UnitTypes.dagger.controller = () -> new JmExecutorAI();
+            
+            // 把自定义的处决武器塞给它
+            // 注意：我们添加一个隐藏的处决武器，不占用它原本的炮管
+            mindustry.content.UnitTypes.dagger.weapons.add(new JmExecutorWeapon() {{
+                mirror = false;
+                x = 0; 
+                y = 0;
+                reload = 600f;
+                range = 400f;
+            }});
         });
 
         // 2. 指挥模式点击触发跃迁
@@ -105,4 +115,4 @@ public class JmMod extends Mod {
         quantumShieldWall = new QuantumShieldWall("quantum-shield-wall");
         Vars.content.blocks().add(quantumShieldWall);
     }
-                    }
+}
