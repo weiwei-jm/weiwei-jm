@@ -6,7 +6,6 @@ import arc.graphics.g2d.Fill;
 import arc.graphics.g2d.Lines;
 import arc.math.Angles;
 import arc.math.Mathf;
-import arc.util.Time;
 import mindustry.entities.Effect;
 import mindustry.gen.Unit;
 import mindustry.graphics.Layer;
@@ -26,7 +25,6 @@ public class JmSpearEffect extends Effect {
         e.at(sx, sy, 0, Color.valueOf("ff0000"));
     }
 
-    // 👇 原版 Effect 正确的重写方法
     @Override
     public void update(EffectContainer e) {
         if (e.time > 10f && target != null && target.isValid() && e.time < 11f) {
