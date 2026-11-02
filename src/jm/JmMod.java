@@ -26,57 +26,50 @@ public class JmMod extends Mod {
     }
 
     @Override
-    public void init() {
-        Events.on(EventType.WorldLoadEvent.class, e -> {
-            var dagger = mindustry.content.UnitTypes.dagger;
-            
-            // 👇 就是这里！完美加上了 u ->，解决了所有的类型推断报错
-            dagger.controller = u -> new JmExecutorAI();
-            
-            // 初始化武器
-            JmExecutorWeapon w = new JmExecutorWeapon();
-            w.mirror = false;
-            w.x = 0; 
-            w.y = 0;
-            w.reload = 600f;
-            
-            dagger.weapons.add(w);
-        });
+public void init() {
+    // 1. 强行给尖刀替换 AI（只要造出来，就自动换上我们的处决 AI）
+    Events.on(EventType.UnitCreateEvent.class, e -> {
+        if (e.unit != null && e.unit.type == mindustry.content.UnitTypes.dagger && e.unit.isPlayer()) {
+            e.unit.controller(new JmExecutorAI());
+        }
+    });
 
-        Events.run(EventType.Trigger.update, () -> {
-            if (Vars.player != null && Vars.control != null && Vars.control.input.commandMode) {
-                if (Core.input.isTouched()) {
-                    if (Core.scene.hasMouse()) return;
-                    Vec2 pos = Core.input.mouseWorld();
-                    if (Vars.control.input.selectedUnits != null) {
-                        for (Unit unit : Vars.control.input.selectedUnits) {
-                            for (mindustry.entities.abilities.Ability ability : unit.abilities) {
-                                if (ability instanceof BlinkAbility blink) {
-                                    blink.trigger(unit, pos.x, pos.y);
-                                    if (unit.controller() instanceof mindustry.ai.types.CommandAI ai) {
-                                        ai.targetPos = null;
-                                    }
+    // 2. 指挥模式点击触发跃迁
+    Events.run(EventType.Trigger.update, () -> {
+        if (Vars.player != null && Vars.control != null && Vars.control.input.commandMode) {
+            if (Core.input.isTouched()) {
+                if (Core.scene.hasMouse()) return;
+                Vec2 pos = Core.input.mouseWorld();
+                if (Vars.control.input.selectedUnits != null) {
+                    for (Unit unit : Vars.control.input.selectedUnits) {
+                        for (mindustry.entities.abilities.Ability ability : unit.abilities) {
+                            if (ability instanceof BlinkAbility blink) {
+                                blink.trigger(unit, pos.x, pos.y);
+                                if (unit.controller() instanceof mindustry.ai.types.CommandAI ai) {
+                                    ai.targetPos = null;
                                 }
                             }
                         }
                     }
                 }
             }
-        });
+        }
+    });
 
-        Events.run(EventType.Trigger.draw, () -> {
-            for (int i = BlinkAbility.effects.size - 1; i >= 0; i--) {
-                BlinkEffect effect = BlinkAbility.effects.get(i);
-                effect.update();
-                if (effect.isDead()) {
-                    BlinkAbility.effects.remove(i);
-                } else {
-                    effect.draw();
-                }
+    // 3. 渲染跃迁特效
+    Events.run(EventType.Trigger.draw, () -> {
+        for (int i = BlinkAbility.effects.size - 1; i >= 0; i--) {
+            BlinkEffect effect = BlinkAbility.effects.get(i);
+            effect.update();
+            if (effect.isDead()) {
+                BlinkAbility.effects.remove(i);
+            } else {
+                effect.draw();
             }
-        });
-    }
-
+        }
+    });
+}
+    
     @Override
     public void loadContent() {
         super.loadContent();
