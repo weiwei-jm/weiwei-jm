@@ -60,7 +60,7 @@ public class JmExecutorAI extends AIController {
             else if (stage == 2) {
                 if (stageTime >= 3f) {
                     stageTime = 0f;
-                    rand.setSeed(Time.time);
+                    rand.setSeed((long) Time.time);
                     
                     // 随机角度生成一把长矛
                     float ang = rand.random(360f);
