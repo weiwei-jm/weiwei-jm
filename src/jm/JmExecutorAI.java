@@ -2,95 +2,78 @@ package jm;
 
 import arc.math.Angles;
 import arc.math.Mathf;
-import arc.math.Rand;
 import arc.util.Time;
-import arc.util.Tmp;
 import mindustry.entities.units.AIController;
 import mindustry.gen.Healthc;
 import mindustry.gen.Unit;
 
 public class JmExecutorAI extends AIController {
-    private float stageTime = 0f;
-    private int stage = 0;
-    private Unit execTarget = null;
-    private final Rand rand = new Rand();
+    private float execTimer = 0f;
+    private int hits = 0; // 记录打了几次，用来模拟原版的处决前摇
 
     @Override
     public void updateUnit() {
+        // 1. 原版基础索敌
         if (retarget()) target = findTarget();
         updateMovement();
 
-        // 如果没目标就重置
+        // 2. 如果没目标，重置状态
         if (target == null || !(target instanceof Healthc h) || !h.isValid()) {
-            stage = 0;
-            stageTime = 0f;
-            execTarget = null;
+            execTimer = 0f;
+            hits = 0;
             return;
         }
 
         float dst = unit.dst(target);
 
-        // 触发条件：敌人在 400 像素内，且还没进入处决
-        if (dst < 400f && stage == 0) {
-            if (h.health() > 2000f) {
-                // 高血量敌人，开启处决阶段
-                stage = 1;
-                stageTime = 0f;
-                execTarget = (Unit) target;
-            } else {
-                // 杂兵直接秒杀
-                h.damage(9999999f);
-                mindustry.content.Fx.massiveExplosion.at(h.x(), h.y());
-            }
-        }
-
-        // 👇 处决动画展开逻辑
-        if (stage > 0 && execTarget != null) {
-            stageTime += Time.delta;
-
-            // 第 1 阶段：准备动作（0 - 40帧）
-            if (stage == 1) {
-                unit.lookAt(execTarget);
-                if (stageTime >= 40f) {
-                    stage = 2;
-                    stageTime = 0f;
-                }
-            }
-            // 第 2 阶段：万剑穿刺（每 3 帧生成一把剑）
-            else if (stage == 2) {
-                if (stageTime >= 3f) {
-                    stageTime = 0f;
-                    rand.setSeed((long) Time.time);
+        // 3. 进入攻击范围（原版尖刀射程很短，我们放宽到 300 像素）
+        if (dst < 300f) {
+            unit.lookAt(target);
+            
+            // 每次到 10 帧就攻击一次
+            if (unit.timer(1, 10f)) {
+                
+                // 👇 核心：如果敌人血量极高（Boss），触发万剑归宗！
+                if (h.health() > 2000f) {
+                    hits++;
                     
-                    // 随机角度生成一把长矛
-                    float ang = rand.random(360f);
-                    float sx = unit.x + Angles.trnsx(ang, 60f);
-                    float sy = unit.y + Angles.trnsy(ang, 60f);
-                    
-                    JmSpearEntity.create(execTarget, sx, sy, ang, rand.random(8f, 15f), 9999999f);
-                    
-                    // 稍微震一下屏
-                    if (unit == mindustry.Vars.player.unit()) {
-                        mindustry.Vars.renderer.shake(2f, 5f);
+                    // 前 3 次攻击作为前摇，爆出红色法阵特效
+                    if (hits <= 3) {
+                        mindustry.content.Fx.chainLightning.at(target.x(), target.y(), 0, arc.graphics.Color.red);
+                    } else {
+                        // 第 4 次，直接释放万剑归宗！
+                        for (int i = 0; i < 8; i++) {
+                            float ang = i * 45f + Mathf.random(-20f, 20f);
+                            float sx = unit.x + Angles.trnsx(ang, 60f);
+                            float sy = unit.y + Angles.trnsy(ang, 60f);
+                            
+                            // 调用你之前的实体类
+                            JmSpearEntity.create((Unit) target, sx, sy, ang, 12f, 9999999f);
+                        }
+                        // 造成真实伤害
+                        h.damage(9999999f);
+                        hits = 0; // 重置
+                        mindustry.Vars.renderer.shake(5f, 10f);
                     }
-                }
-
-                // 几秒后结束处决
-                if (stageTime > 60f) {
-                    stage = 0;
-                    stageTime = 0f;
-                    execTarget = null;
+                } else {
+                    // 👇 如果是小兵，直接秒杀
+                    h.damage(9999999f);
+                    mindustry.content.Fx.massiveExplosion.at(h.x(), h.y());
                 }
             }
+        } else {
+            // 离得太远，重置攻击段数
+            hits = 0;
         }
     }
 
     @Override
     public void updateWeapons() {
-        // 屏蔽原版武器
+        // 彻底禁用原版武器，防止它去用原本的小机枪平A
     }
 
     public mindustry.gen.Teamc findTarget() {
+        // 索敌范围提升到 400 像素
         return mindustry.entities.Units.closestEnemy(unit.team, unit.x, unit.y, 400f, u -> true);
     }
 
